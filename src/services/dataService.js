@@ -105,8 +105,23 @@ export async function fetchActionItems() {
 
   try {
     const res = await fetch(api)
-    if (!res.ok) throw new Error('Network response was not ok')
-    const json = await res.json()
+    if (!res.ok) {
+      // Try to capture error body for debugging
+      let txt = ''
+      try { txt = await res.text() } catch (e) { /* ignore */ }
+      console.error('fetchActionItems: non-OK response', res.status, txt)
+      throw new Error('Network response was not ok')
+    }
+
+    // Parse JSON defensively — handle cases where the server returns plain text (e.g., 'unauthorized')
+    let json
+    try {
+      json = await res.json()
+    } catch (err) {
+      const text = await res.text().catch(() => '')
+      console.error('fetchActionItems: invalid JSON response from API', text)
+      throw new Error('Invalid JSON from API: ' + (text ? text.slice(0,200) : 'empty'))
+    }
     // If the backend returns {columns, rows}
     function unwrapValue(v) {
       if (v && typeof v === 'object') {
