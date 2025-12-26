@@ -58,15 +58,6 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
                     value={formData[col.key] || ''}
                     onChange={e => handleChange(col.key, e.target.value)}
                   />
-                ) : col.key === 'business_type' ? (
-                  <select
-                    value={formData[col.key] || ''}
-                    onChange={e => handleChange(col.key, e.target.value)}
-                  >
-                    <option value="">Select Type</option>
-                    <option value="Internal">Internal</option>
-                    <option value="External">External</option>
-                  </select>
                 ) : col.key === 'status' ? (
                   <select
                     value={formData[col.key] || ''}
