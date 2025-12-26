@@ -9,6 +9,16 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Simple request logging to help diagnose runtime errors in Cloud Run
+app.use((req, res, next) => {
+  const start = Date.now()
+  res.on('finish', () => {
+    const ms = Date.now() - start
+    console.log(`${req.method} ${req.path} ${res.statusCode} - ${ms}ms`)
+  })
+  next()
+})
+
 const PORT = process.env.PORT || 5000
 
 // Table reference: project.dataset.table
@@ -30,6 +40,30 @@ if (credsPath) {
   bq = new BigQuery()
 }
 
+// Health status object used by /healthz
+let health = { ok: false, message: 'starting' }
+
+// Perform a lightweight BigQuery check to validate credentials and table access
+async function performStartupCheck() {
+  try {
+    const [project, dataset, table] = TABLE_FULL.split('.')
+    const tableRef = bq.dataset(dataset, { projectId: project }).table(table)
+    // Try to fetch metadata as a minimal permission check
+    await tableRef.getMetadata()
+    health = { ok: true, message: 'ok' }
+    console.log('Startup check: BigQuery table accessible')
+  } catch (err) {
+    // Keep the message short and avoid leaking sensitive info
+    const short = err && err.message ? String(err.message).slice(0, 200) : 'unknown error'
+    health = { ok: false, message: `BigQuery unavailable: ${short}` }
+    console.error('Startup check failed:', err && err.stack ? err.stack : err)
+  }
+}
+
+// Run initial check and schedule periodic checks
+performStartupCheck()
+setInterval(performStartupCheck, 5 * 60 * 1000) // every 5 minutes
+
 app.get('/api/action-items', async (req, res) => {
   try {
     const [project, dataset, table] = TABLE_FULL.split('.')
@@ -48,8 +82,9 @@ app.get('/api/action-items', async (req, res) => {
 
     res.json({ columns, rows })
   } catch (err) {
-    console.error('Error fetching action-items from BigQuery', err)
-    res.status(500).json({ error: String(err) })
+    // Log stack for debugging; return generic message to client
+    console.error('Error fetching action-items from BigQuery', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: 'internal server error' })
   }
 })
 
@@ -63,8 +98,8 @@ app.delete('/api/action-items/:id', async (req, res) => {
     await job.getQueryResults()
     res.json({ success: true })
   } catch (err) {
-    console.error('Error deleting action-item', err)
-    res.status(500).json({ error: String(err) })
+    console.error('Error deleting action-item', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: 'internal server error' })
   }
 })
 
@@ -90,9 +125,15 @@ app.put('/api/action-items/:id', async (req, res) => {
     await job.getQueryResults()
     res.json({ success: true })
   } catch (err) {
-    console.error('Error updating action-item', err)
-    res.status(500).json({ error: String(err) })
+    console.error('Error updating action-item', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: 'internal server error' })
   }
+})
+
+// Health endpoint used by Cloud Run or load balancers
+app.get('/healthz', (req, res) => {
+  if (health.ok) return res.json({ status: 'ok' })
+  return res.status(500).json({ status: 'error', message: health.message })
 })
 
 app.listen(PORT, () => {
@@ -116,6 +157,22 @@ if (fs.existsSync(distPath)) {
   // serve index.html for any non-API routes (SPA)
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next()
-    res.sendFile(path.join(distPath, 'index.html'))
+    try {
+      const index = path.join(distPath, 'index.html')
+      if (!fs.existsSync(index)) {
+        console.error('index.html missing in dist')
+        return res.status(500).send('server error')
+      }
+      return res.sendFile(index)
+    } catch (err) {
+      console.error('Error serving index.html', err && err.stack ? err.stack : err)
+      return res.status(500).send('server error')
+    }
   })
 }
+
+// Global error handler to catch unexpected errors and log them
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err && err.stack ? err.stack : err)
+  try { res.status(500).json({ error: 'internal server error' }) } catch (e) { /* ignore */ }
+})
