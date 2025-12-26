@@ -13,13 +13,16 @@ steps:
     args:
       - build
       - '-t'
-      - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+      - 'gcr.io/$PROJECT_ID/actionitems:latest'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/actionitems:$BUILD_ID'
       - .
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - push
-      - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/actionitems'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -28,7 +31,7 @@ steps:
       - -lc
       - |
         gcloud run deploy actionitems \
-          --image gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA \
+          --image gcr.io/$PROJECT_ID/actionitems:latest \
           --region europe-west1 \
           --platform managed \
           --allow-unauthenticated \
@@ -36,7 +39,8 @@ steps:
           --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemstable"
 
 images:
-  - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/actionitems:latest'
+  - 'gcr.io/$PROJECT_ID/actionitems:$BUILD_ID'
 
 options:
   logging: CLOUD_LOGGING_ONLY
