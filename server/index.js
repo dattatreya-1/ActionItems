@@ -24,6 +24,21 @@ const PORT = process.env.PORT || 5000
 // Table reference: project.dataset.table
 const TABLE_FULL = process.env.BQ_TABLE || 'gen-lang-client-0815432790.oberoiventures.actionitemstable'
 
+// Resolve dist path once and reuse
+const distPath = path.join(process.cwd(), 'dist')
+
+// Serve favicon explicitly regardless of build presence to avoid 500s
+app.get('/favicon.ico', (req, res) => {
+  try {
+    const ico = path.join(distPath, 'favicon.ico')
+    if (fs.existsSync(ico)) return res.sendFile(ico)
+    return res.status(204).end()
+  } catch (err) {
+    console.error('Error serving favicon.ico', err && err.stack ? err.stack : err)
+    return res.status(204).end()
+  }
+})
+
 // Initialize BigQuery client.
 // Behavior:
 // - If the env var GOOGLE_APPLICATION_CREDENTIALS is set (pointing to a JSON key file),
@@ -170,7 +185,6 @@ process.on('uncaughtException', (err) => {
 })
 
 // Serve frontend static files (if built)
-const distPath = path.join(process.cwd(), 'dist')
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath))
   // Serve favicon explicitly to avoid 500s when file is missing
