@@ -1,0 +1,44 @@
+steps:
+  # Install dependencies and build the frontend
+  - name: 'node:18'
+    entrypoint: 'bash'
+    args:
+      - -lc
+      - |
+        npm ci
+        npm run build
+
+  # Build and push the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+      - .
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - -lc
+      - |
+        gcloud run deploy actionitems \
+          --image gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA \
+          --region europe-west1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars BQ_TABLE="${_BQ_TABLE:-gen-lang-client-0815432790.oberoiventures.actionitemstable}"
+
+images:
+  - 'gcr.io/$PROJECT_ID/actionitems:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _BQ_TABLE: 'gen-lang-client-0815432790.oberoiventures.actionitemstable'
