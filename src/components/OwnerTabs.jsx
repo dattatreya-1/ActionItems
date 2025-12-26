@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import AdminView from './AdminView'
-import { getColumns } from '../services/dataService'
+import AddModal from './AddModal'
+import { getColumns, createActionItem } from '../services/dataService'
 
 export default function OwnerTabs({ data, owners = [], columns: columnsProp = [] }) {
   const [active, setActive] = useState(owners[0] || '')
   const [sortKey, setSortKey] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
+  const [showAddModal, setShowAddModal] = useState(false)
   const columns = columnsProp && columnsProp.length ? columnsProp : getColumns()
   const filtered = data.filter(d => d.owner === active)
   const sorted = [...filtered]
@@ -39,7 +41,10 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
             <AdminView initialData={data} columns={columns} />
           ) : (
             <>
-              <h2>{active}</h2>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+                <h2>{active}</h2>
+                <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+              </div>
               {filtered.length === 0 ? (
                 <div>No records for {active}</div>
               ) : (
@@ -94,6 +99,18 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
           )}
         </div>
       </div>
+      {showAddModal && (
+        <AddModal 
+          columns={columns}
+          defaultOwner={active !== 'Admin' ? active : ''}
+          onClose={() => setShowAddModal(false)}
+          onSave={async (formData) => {
+            await createActionItem(formData)
+            setShowAddModal(false)
+            window.location.reload()
+          }}
+        />
+      )}
     </section>
   )
 }

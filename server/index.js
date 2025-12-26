@@ -103,6 +103,36 @@ app.get('/api/action-items', async (req, res) => {
   }
 })
 
+// Create a new action item
+app.post('/api/action-items', async (req, res) => {
+  try {
+    const data = req.body || {}
+    const keys = Object.keys(data)
+    if (keys.length === 0) return res.status(400).json({ error: 'no fields provided' })
+
+    const [project, dataset, table] = TABLE_FULL.split('.')
+    
+    // Generate a unique ID (you can use UUID or timestamp-based)
+    const id = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    data.id = id
+    
+    // Build INSERT query
+    const allKeys = Object.keys(data)
+    const columns = allKeys.map(k => `\`${k}\``).join(', ')
+    const paramNames = allKeys.map((k, i) => `@p${i}`).join(', ')
+    const params = {}
+    allKeys.forEach((k, i) => { params[`p${i}`] = data[k] })
+
+    const query = `INSERT INTO \`${project}.${dataset}.${table}\` (${columns}) VALUES (${paramNames})`
+    const [job] = await bq.createQueryJob({ query, params })
+    await job.getQueryResults()
+    res.json({ success: true, id })
+  } catch (err) {
+    console.error('Error creating action-item', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: 'internal server error' })
+  }
+})
+
 // Delete an item by id (expects id to uniquely identify row)
 app.delete('/api/action-items/:id', async (req, res) => {
   try {

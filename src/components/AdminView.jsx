@@ -1,12 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react'
-import { getColumns } from '../services/dataService'
+import { getColumns, createActionItem } from '../services/dataService'
 import EditModal from './EditModal'
+import AddModal from './AddModal'
 
 export default function AdminView({ initialData = [], columns = [] }) {
   const [owner, setOwner] = useState('')
   const [business, setBusiness] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [showAddModal, setShowAddModal] = useState(false)
 
   // Use columns provided by parent (from API) if present, otherwise fall back to defaults
   const cols = (columns && columns.length) ? columns : getColumns()
@@ -66,7 +68,10 @@ export default function AdminView({ initialData = [], columns = [] }) {
 
   return (
     <section className="admin">
-      <h2>Admin</h2>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
+        <h2>Admin</h2>
+        <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+      </div>
 
       <div className="filters">
         <label>
@@ -160,6 +165,18 @@ export default function AdminView({ initialData = [], columns = [] }) {
             window.location.reload()
           } catch (err) { alert('Update failed: '+err) }
         }} />
+      )}
+      {showAddModal && (
+        <AddModal 
+          columns={cols}
+          defaultOwner=""
+          onClose={() => setShowAddModal(false)}
+          onSave={async (formData) => {
+            await createActionItem(formData)
+            setShowAddModal(false)
+            window.location.reload()
+          }}
+        />
       )}
     </section>
   )

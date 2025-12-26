@@ -171,3 +171,13 @@ export async function updateActionItem(id, data) {
   if (!res.ok) throw new Error('Update failed')
   return res.json()
 }
+
+export async function createActionItem(data) {
+  const res = await fetch('/api/action-items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  if (!res.ok) throw new Error('Create failed')
+  return res.json()
+}

@@ -1,0 +1,102 @@
+import React, { useState } from 'react'
+import { createActionItem } from '../services/dataService'
+
+export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
+  const [formData, setFormData] = useState({
+    owner: defaultOwner || ''
+  })
+  const [loading, setLoading] = useState(false)
+
+  const handleChange = (key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await onSave(formData)
+    } catch (err) {
+      alert('Failed to create action item: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Skip rendering fields for 'id' and 'actions'
+  const editableColumns = columns.filter(col => 
+    col.key !== 'id' && col.key !== 'actions'
+  )
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Add New Action Item</h2>
+          <button onClick={onClose} className="close-btn">&times;</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            {editableColumns.map(col => (
+              <div key={col.key} className="form-group">
+                <label>{col.label}</label>
+                {col.key === 'owner' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                    required
+                  >
+                    <option value="">Select Owner</option>
+                    <option value="Florence">Florence</option>
+                    <option value="Dan">Dan</option>
+                    <option value="Kams">Kams</option>
+                    <option value="Sunny">Sunny</option>
+                  </select>
+                ) : col.key.includes('date') || col.key === 'deadline' ? (
+                  <input
+                    type="date"
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  />
+                ) : col.key === 'business_type' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Type</option>
+                    <option value="Internal">Internal</option>
+                    <option value="External">External</option>
+                  </select>
+                ) : col.key === 'status' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Status</option>
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                    placeholder={`Enter ${col.label.toLowerCase()}`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="modal-footer">
+            <button type="button" onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" disabled={loading}>
+              {loading ? 'Creating...' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
