@@ -150,12 +150,32 @@ app.listen(PORT, () => {
   }
 })
 
+// Log which files are present in dist (if any) to help diagnose missing build assets
+try {
+  const distFiles = fs.existsSync(distPath) ? fs.readdirSync(distPath) : []
+  console.log('Dist files:', distFiles.slice(0, 50))
+} catch (e) {
+  console.error('Error reading dist folder', e && e.stack ? e.stack : e)
+}
+
+// Global process-level handlers to capture crashes and promise rejections
+process.on('unhandledRejection', (reason, p) => {
+  console.error('Unhandled Rejection at:', p, 'reason:', reason && reason.stack ? reason.stack : reason)
+})
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err && err.stack ? err.stack : err)
+  // allow process to exit after logging (Cloud Run will restart the container)
+  try { process.exit(1) } catch (e) { /* ignore */ }
+})
+
 // Serve frontend static files (if built)
 const distPath = path.join(process.cwd(), 'dist')
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath))
   // serve index.html for any non-API routes (SPA)
-  app.get('*', (req, res, next) => {
+  // Use '/*' instead of '*' to avoid path-to-regexp errors on some versions
+  app.get('/*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next()
     try {
       const index = path.join(distPath, 'index.html')
