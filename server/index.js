@@ -173,6 +173,17 @@ process.on('uncaughtException', (err) => {
 const distPath = path.join(process.cwd(), 'dist')
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath))
+  // Serve favicon explicitly to avoid 500s when file is missing
+  app.get('/favicon.ico', (req, res) => {
+    try {
+      const ico = path.join(distPath, 'favicon.ico')
+      if (fs.existsSync(ico)) return res.sendFile(ico)
+      return res.status(204).end()
+    } catch (err) {
+      console.error('Error serving favicon.ico', err && err.stack ? err.stack : err)
+      return res.status(204).end()
+    }
+  })
   // serve index.html for any non-API routes (SPA)
   // Use '/*' instead of '*' to avoid path-to-regexp errors on some versions
   app.get('/*', (req, res, next) => {
