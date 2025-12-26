@@ -2,45 +2,56 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { getColumns } from '../services/dataService'
 import EditModal from './EditModal'
 
-export default function AdminView({ initialData = [] }) {
+export default function AdminView({ initialData = [], columns = [] }) {
   const [owner, setOwner] = useState('')
   const [business, setBusiness] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
 
-  const owners = useMemo(() => {
-    const set = new Set(initialData.map(d => d.owner))
-    return Array.from(set)
-  }, [initialData])
+  // Use columns provided by parent (from API) if present, otherwise fall back to defaults
+  const cols = (columns && columns.length) ? columns : getColumns()
 
-  const columns = getColumns()
-  useEffect(() => {
-    // if columns prop is provided (from API) update local columns state
-    if (columns && columns.length) setColumnsProp(columns)
-  }, [columns])
+  // Helper to find the column key for a human label (robust against snake_case or spacing)
+  const findColumnKey = (name) => {
+    const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+    const found = cols.find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
+    return found ? found.key : null
+  }
+
+  const ownerKey = findColumnKey('owner')
+  const businessTypeKey = findColumnKey('business type')
+  const statusKey = findColumnKey('status')
+  const deadlineKey = findColumnKey('deadline')
+  const businessKey = findColumnKey('business')
+
+  const owners = useMemo(() => {
+    const set = new Set(initialData.map(d => d[ownerKey]).filter(Boolean))
+    return Array.from(set)
+  }, [initialData, ownerKey])
+
   const [sortKey, setSortKey] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
   const [editingRow, setEditingRow] = useState(null)
-  const [columnsProp, setColumnsProp] = useState(columns)
+  const [columnsProp, setColumnsProp] = useState(cols)
 
   const [businessType, setBusinessType] = useState('')
   const [status, setStatus] = useState('')
 
   const businessTypes = useMemo(() => {
-    return Array.from(new Set(initialData.map(d => d.businessType || '').filter(Boolean)))
-  }, [initialData])
+    return Array.from(new Set(initialData.map(d => d[businessTypeKey] || '').filter(Boolean)))
+  }, [initialData, businessTypeKey])
 
   const statuses = useMemo(() => {
-    return Array.from(new Set(initialData.map(d => d.status || '').filter(Boolean)))
-  }, [initialData])
+    return Array.from(new Set(initialData.map(d => d[statusKey] || '').filter(Boolean)))
+  }, [initialData, statusKey])
 
   const filtered = initialData.filter(item => {
-    if (owner && item.owner !== owner) return false
-    if (business && !item.business.toLowerCase().includes(business.toLowerCase())) return false
-    if (businessType && item.businessType !== businessType) return false
-    if (status && item.status !== status) return false
-    if (from && item.deadline < from) return false
-    if (to && item.deadline > to) return false
+    if (ownerKey && owner && item[ownerKey] !== owner) return false
+    if (businessKey && business && !(String(item[businessKey] || '').toLowerCase().includes(business.toLowerCase()))) return false
+    if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
+    if (statusKey && status && item[statusKey] !== status) return false
+    if (deadlineKey && from && item[deadlineKey] < from) return false
+    if (deadlineKey && to && item[deadlineKey] > to) return false
     return true
   })
 
@@ -102,7 +113,7 @@ export default function AdminView({ initialData = [] }) {
         <table>
           <thead>
             <tr>
-              {columns.map(c => (
+              {cols.map(c => (
                 <th key={c.key} onClick={() => {
                   if (sortKey === c.key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
                   else { setSortKey(c.key); setSortDir('asc') }
@@ -113,7 +124,7 @@ export default function AdminView({ initialData = [] }) {
           <tbody>
             {(sortKey ? sorted : filtered).map(r => (
               <tr key={r.id}>
-                {columns.map(c => (
+                {cols.map(c => (
                   <td key={c.key}>
                     {c.key === 'actions' ? (
                       <div style={{display:'flex',gap:8}}>
@@ -142,7 +153,7 @@ export default function AdminView({ initialData = [] }) {
         <div className="admin-count">Showing {filtered.length} of {initialData.length}</div>
       </div>
       {editingRow && (
-        <EditModal row={editingRow} columns={columns} onClose={() => setEditingRow(null)} onSave={async (updated) => {
+        <EditModal row={editingRow} columns={cols} onClose={() => setEditingRow(null)} onSave={async (updated) => {
           try {
             await (await import('../services/dataService')).updateActionItem(editingRow.id, updated)
             setEditingRow(null)
