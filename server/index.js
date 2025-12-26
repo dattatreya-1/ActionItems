@@ -1,4 +1,5 @@
 import express from 'express'
+import fs from 'fs'
 import cors from 'cors'
 import { BigQuery } from '@google-cloud/bigquery'
 import path from 'path'
@@ -88,3 +89,14 @@ app.listen(PORT, () => {
   console.log(`Using table: ${TABLE_FULL}`)
   console.log(`Credentials: ${credsPath}`)
 })
+
+// Serve frontend static files (if built)
+const distPath = path.join(process.cwd(), 'dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  // serve index.html for any non-API routes (SPA)
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+}

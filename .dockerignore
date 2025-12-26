@@ -1,0 +1,9 @@
+node_modules
+.git
+secret-backup
+*.log
+.env
+dist
+build
+.DS_Store
+gen-lang-client-0815432790-07161bb65021.json

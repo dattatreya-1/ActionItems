@@ -18,3 +18,37 @@ To point to a real API endpoint, set VITE_API_URL when running the dev server:
 Windows PowerShell example:
 
   $env:VITE_API_URL = "https://your-api.example.com/action_items"; npm run dev
+
+  Deploying to Google Cloud Run 🚀
+
+  Prerequisites:
+  - Install and initialize the Google Cloud SDK: https://cloud.google.com/sdk/docs
+  - Enable Cloud Run & Container Registry / Artifact Registry APIs.
+  - Ensure you have a service account with BigQuery access for the Cloud Run service (preferred). Avoid embedding service account JSON in the repository.
+
+  How to build and deploy (using Artifact Registry or Container Registry):
+
+  1) Build the container image locally:
+
+    docker build -t gcr.io/PROJECT-ID/actionitems:latest .
+
+  2) Push the image to Container Registry (replace PROJECT-ID):
+
+    docker push gcr.io/PROJECT-ID/actionitems:latest
+
+  3) Deploy to Cloud Run:
+
+    gcloud run deploy actionitems \
+      --image gcr.io/PROJECT-ID/actionitems:latest \
+      --region us-central1 \
+      --platform managed \
+      --allow-unauthenticated \
+      --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemstable"
+
+  Notes on credentials:
+  - Preferred: grant the Cloud Run service a service account with BigQuery Data Viewer / Data Editor permissions. Use `--service-account` in the deploy command to run as that service account.
+  - If you must use a service account key file, store it in Secret Manager and reference it as an environment variable or mount it at runtime. Do NOT commit the key into your repo.
+
+  Local prod test:
+  - Run `npm run build` then `node server/index.js` and open http://localhost:8080 (set PORT env var if needed).
+
