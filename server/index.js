@@ -99,7 +99,9 @@ app.listen(PORT, () => {
   console.log(`Action Tracker API listening on http://localhost:${PORT}`)
   console.log(`Using table: ${TABLE_FULL}`)
   if (credsPath) {
-    console.log(`GOOGLE_APPLICATION_CREDENTIALS set: ${credsPath}`)
+    // Do not print the full path or contents of the credentials file to avoid exposing
+    // sensitive information in logs. Only indicate that the env var is set.
+    console.log('GOOGLE_APPLICATION_CREDENTIALS is set (key file detected)')
   } else if (process.env.K_SERVICE) {
     console.log('No GOOGLE_APPLICATION_CREDENTIALS found. Running on Cloud Run (K_SERVICE detected) and using ADC via the Cloud Run service account.')
   } else {
