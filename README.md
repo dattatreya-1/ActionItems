@@ -48,6 +48,7 @@ Windows PowerShell example:
   Notes on credentials:
   - Preferred: grant the Cloud Run service a service account with BigQuery Data Viewer / Data Editor permissions. Use `--service-account` in the deploy command to run as that service account.
   - If you must use a service account key file, store it in Secret Manager and reference it as an environment variable or mount it at runtime. Do NOT commit the key into your repo.
+  - Behavior in this project: if `GOOGLE_APPLICATION_CREDENTIALS` is set (pointing to a JSON key file), the server will use that key (useful for local development). If it is NOT set, the server will rely on Application Default Credentials (ADC) — this is how Cloud Run should be configured: attach a service account with the required BigQuery permissions and don't set a JSON key in the environment.
 
   Local prod test:
   - Run `npm run build` then `node server/index.js` and open http://localhost:8080 (set PORT env var if needed).

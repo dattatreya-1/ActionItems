@@ -14,10 +14,21 @@ const PORT = process.env.PORT || 5000
 // Table reference: project.dataset.table
 const TABLE_FULL = process.env.BQ_TABLE || 'gen-lang-client-0815432790.oberoiventures.actionitemstable'
 
-// Initialize BigQuery client. It will pick up GOOGLE_APPLICATION_CREDENTIALS or
-// you can set GOOGLE_APPLICATION_CREDENTIALS to the path of the service account JSON.
-const credsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(process.cwd(), 'gen-lang-client-0815432790-07161bb65021.json')
-const bq = new BigQuery({ keyFilename: credsPath })
+// Initialize BigQuery client.
+// Behavior:
+// - If the env var GOOGLE_APPLICATION_CREDENTIALS is set (pointing to a JSON key file),
+//   the client will use that file via `keyFilename` (useful for local development).
+// - If the env var is NOT set, the client will be constructed without explicit credentials
+//   and will use Application Default Credentials (ADC). This allows Cloud Run to
+//   provide credentials via its runtime service account (no JSON key required).
+const credsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS
+let bq
+if (credsPath) {
+  bq = new BigQuery({ keyFilename: credsPath })
+} else {
+  // No key file provided; rely on ADC (works on Cloud Run when a service account is attached)
+  bq = new BigQuery()
+}
 
 app.get('/api/action-items', async (req, res) => {
   try {
@@ -87,7 +98,13 @@ app.put('/api/action-items/:id', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Action Tracker API listening on http://localhost:${PORT}`)
   console.log(`Using table: ${TABLE_FULL}`)
-  console.log(`Credentials: ${credsPath}`)
+  if (credsPath) {
+    console.log(`GOOGLE_APPLICATION_CREDENTIALS set: ${credsPath}`)
+  } else if (process.env.K_SERVICE) {
+    console.log('No GOOGLE_APPLICATION_CREDENTIALS found. Running on Cloud Run (K_SERVICE detected) and using ADC via the Cloud Run service account.')
+  } else {
+    console.log('No GOOGLE_APPLICATION_CREDENTIALS found. Using Application Default Credentials (ADC).')
+  }
 })
 
 // Serve frontend static files (if built)
