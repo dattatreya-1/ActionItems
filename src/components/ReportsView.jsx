@@ -7,6 +7,7 @@ export default function ReportsView({ data, columns }) {
   const [deadlineFrom, setDeadlineFrom] = useState('')
   const [deadlineTo, setDeadlineTo] = useState('')
   const [metric, setMetric] = useState('minutes') // 'minutes' or 'count'
+  const [reportType, setReportType] = useState('pivot') // 'pivot' or 'daywise'
   
   // Helper to find column key
   const findColumnKey = (name) => {
@@ -125,9 +126,99 @@ export default function ReportsView({ data, columns }) {
     return { totalMinutes, totalCount, totalHours, totalDays }
   }, [pivotData])
   
+  // Day-wise workload calculation
+  const daywiseData = useMemo(() => {
+    // Get date range - default to next 7 days if not specified
+    const startDate = deadlineFrom ? new Date(deadlineFrom) : new Date()
+    const endDate = deadlineTo ? new Date(deadlineTo) : (() => {
+      const end = new Date()
+      end.setDate(end.getDate() + 7)
+      return end
+    })()
+    
+    // Create array of dates
+    const dates = []
+    const currentDate = new Date(startDate)
+    while (currentDate <= endDate) {
+      dates.push(new Date(currentDate))
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+    
+    // Aggregate data by date
+    const dailyWorkload = dates.map(date => {
+      const dateStr = date.toISOString().split('T')[0]
+      
+      const itemsForDate = data.filter(item => {
+        if (selectedOwner && item[ownerKey] !== selectedOwner) return false
+        if (!deadlineKey || !item[deadlineKey]) return false
+        const itemDate = new Date(item[deadlineKey]).toISOString().split('T')[0]
+        return itemDate === dateStr
+      })
+      
+      const totalMinutes = itemsForDate.reduce((sum, item) => {
+        return sum + (parseFloat(item[minKey]) || 0)
+      }, 0)
+      
+      const totalHours = totalMinutes / 60
+      const totalDays = totalHours / 6
+      
+      return {
+        date: dateStr,
+        displayDate: date.toLocaleDateString(),
+        minutes: totalMinutes,
+        hours: totalHours,
+        days: totalDays,
+        itemCount: itemsForDate.length
+      }
+    })
+    
+    // Calculate totals
+    const totals = dailyWorkload.reduce((acc, day) => ({
+      minutes: acc.minutes + day.minutes,
+      hours: acc.hours + day.hours,
+      days: acc.days + day.days,
+      itemCount: acc.itemCount + day.itemCount
+    }), { minutes: 0, hours: 0, days: 0, itemCount: 0 })
+    
+    return { dailyWorkload, totals }
+  }, [data, deadlineFrom, deadlineTo, selectedOwner, deadlineKey, minKey, ownerKey])
+  
   return (
     <div className="reports-view">
       <h2>Reports - Workload Analysis</h2>
+      
+      {/* Report Type Toggle */}
+      <div style={{marginBottom: '1rem', display: 'flex', gap: '0.5rem'}}>
+        <button 
+          onClick={() => setReportType('pivot')}
+          style={{
+            padding: '0.5rem 1rem',
+            background: reportType === 'pivot' ? '#3b82f6' : '#e5e7eb',
+            color: reportType === 'pivot' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: reportType === 'pivot' ? 'bold' : 'normal'
+          }}
+        >
+          Pivot Table
+        </button>
+        <button 
+          onClick={() => setReportType('daywise')}
+          style={{
+            padding: '0.5rem 1rem',
+            background: reportType === 'daywise' ? '#3b82f6' : '#e5e7eb',
+            color: reportType === 'daywise' ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: reportType === 'daywise' ? 'bold' : 'normal'
+          }}
+        >
+          Day-wise Workload
+        </button>
+      </div>
+      
       <p style={{color: '#6b7280', marginBottom: '1rem'}}>
         {shouldUseDefault 
           ? `Showing action items with deadlines from ${today.toLocaleDateString()} to ${next7Days.toLocaleDateString()} (next 7 days)`
@@ -167,6 +258,50 @@ export default function ReportsView({ data, columns }) {
         </label>
       </div>
       
+      {reportType === 'daywise' ? (
+        /* Day-wise Workload Table */
+        <div className="table-wrap" style={{overflowX: 'auto'}}>
+          <table className="pivot-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th style={{textAlign: 'right'}}>Minutes</th>
+                <th style={{textAlign: 'right'}}>Hours</th>
+                <th style={{textAlign: 'right'}}>Days (÷6)</th>
+                <th style={{textAlign: 'right'}}>Items</th>
+              </tr>
+            </thead>
+            <tbody>
+              {daywiseData.dailyWorkload.map(day => (
+                <tr key={day.date}>
+                  <td style={{fontWeight: '600'}}>{day.displayDate}</td>
+                  <td style={{textAlign: 'right'}}>{day.minutes.toFixed(0)}</td>
+                  <td style={{textAlign: 'right'}}>{day.hours.toFixed(2)}</td>
+                  <td style={{textAlign: 'right'}}>{day.days.toFixed(2)}</td>
+                  <td style={{textAlign: 'right'}}>{day.itemCount}</td>
+                </tr>
+              ))}
+              <tr style={{background: '#dbeafe', fontWeight: 'bold'}}>
+                <td>TOTAL</td>
+                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
+                  {daywiseData.totals.minutes.toFixed(0)}
+                </td>
+                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
+                  {daywiseData.totals.hours.toFixed(2)}
+                </td>
+                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
+                  {daywiseData.totals.days.toFixed(2)}
+                </td>
+                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
+                  {daywiseData.totals.itemCount}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* Pivot Table */
+        <>
       <div className="pivot-controls" style={{display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center'}}>
         <label>
           <strong>Metric:</strong>
@@ -241,6 +376,8 @@ export default function ReportsView({ data, columns }) {
                     <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
                       {metric === 'minutes' ? totals.totalMinutes.toFixed(0) : totals.totalCount}
                     </td>
+      </>
+      )}
                     {metric === 'minutes' && (
                       <>
                         <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
