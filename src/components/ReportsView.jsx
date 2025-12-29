@@ -301,7 +301,7 @@ export default function ReportsView({ data, columns }) {
         </div>
       ) : (
         /* Pivot Table */
-        <>
+        <div>
       <div className="pivot-controls" style={{display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center'}}>
         <label>
           <strong>Metric:</strong>
@@ -420,6 +420,7 @@ export default function ReportsView({ data, columns }) {
               </tr>
             </tbody>
           </table>
+        </div>
         </div>
       )}
     </div>
