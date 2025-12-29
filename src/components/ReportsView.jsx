@@ -376,8 +376,6 @@ export default function ReportsView({ data, columns }) {
                     <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
                       {metric === 'minutes' ? totals.totalMinutes.toFixed(0) : totals.totalCount}
                     </td>
-      </>
-      )}
                     {metric === 'minutes' && (
                       <>
                         <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
