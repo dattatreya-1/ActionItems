@@ -172,8 +172,8 @@ export async function deleteActionItem(id) {
 }
 
 export async function updateActionItem(id, data) {
-  const api = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-  const res = await fetch(`${api}/api/action-items/${encodeURIComponent(id)}`, {
+  const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5000')
+  const res = await fetch(`${baseUrl}/api/action-items/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -183,8 +183,8 @@ export async function updateActionItem(id, data) {
 }
 
 export async function createActionItem(data) {
-  const api = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/action-items'
-  const res = await fetch(api, {
+  const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:5000')
+  const res = await fetch(`${baseUrl}/api/action-items`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
