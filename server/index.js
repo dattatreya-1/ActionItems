@@ -179,6 +179,20 @@ app.post('/api/action-items', async (req, res) => {
       filteredData.id = generatedId
     }
     
+    // Generate next row number if table has a row column
+    if (validColumns.includes('row')) {
+      // Get the current maximum row number
+      const maxRowQuery = `SELECT MAX(\`row\`) as max_row FROM \`${project}.${dataset}.${table}\``
+      const [maxRowJob] = await bq.createQueryJob({ query: maxRowQuery })
+      const [maxRowResult] = await maxRowJob.getQueryResults()
+      
+      const currentMaxRow = maxRowResult.length > 0 && maxRowResult[0].max_row !== null ? maxRowResult[0].max_row : 0
+      const nextRowNumber = currentMaxRow + 1
+      
+      console.log('Current max row:', currentMaxRow, 'Next row number:', nextRowNumber)
+      filteredData.row = nextRowNumber
+    }
+    
     const allKeys = Object.keys(filteredData)
     if (allKeys.length === 0) {
       return res.status(400).json({ error: 'No valid fields to insert' })
