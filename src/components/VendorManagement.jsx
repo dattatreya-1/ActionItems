@@ -9,7 +9,7 @@ export default function VendorManagement() {
   const vendors = [
     { name: 'HVAC', color: '#3b82f6' },
     { name: 'Republic Services', color: '#10b981' },
-    { name: 'Ceratsite', color: '#f59e0b' }
+    { name: 'Certasite', color: '#f59e0b' }
   ]
 
   return (
@@ -43,7 +43,7 @@ export default function VendorManagement() {
           <HVACTable />
         ) : activeVendor === 'Republic Services' ? (
           <RepublicServicesTable />
-        ) : activeVendor === 'Ceratsite' ? (
+        ) : activeVendor === 'Certasite' ? (
           <CertasiteTable />
         ) : (
           <div className="vendor-details">
