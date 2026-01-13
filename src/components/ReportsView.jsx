@@ -117,6 +117,16 @@ export default function ReportsView({ data, columns }) {
       return end
     })()
     
+    console.log('Day-wise calculation:', { 
+      deadlineFrom, 
+      deadlineTo, 
+      selectedOwner, 
+      ownerKey, 
+      deadlineKey, 
+      minKey,
+      dataCount: data.length 
+    })
+    
     // Create array of dates
     const dates = []
     const currentDate = new Date(startDate)
@@ -130,15 +140,26 @@ export default function ReportsView({ data, columns }) {
       const dateStr = date.toISOString().split('T')[0]
       
       const itemsForDate = data.filter(item => {
-        if (selectedOwner && item[ownerKey] !== selectedOwner) return false
+        // Check owner using ownerKey
+        if (selectedOwner && ownerKey) {
+          const itemOwner = item[ownerKey]
+          if (itemOwner !== selectedOwner) return false
+        }
         if (!deadlineKey || !item[deadlineKey]) return false
         // Normalize item date to YYYY-MM-DD format
         const itemDateStr = item[deadlineKey].split('T')[0]
-        return itemDateStr === dateStr
+        const match = itemDateStr === dateStr
+        
+        if (match) {
+          console.log('Found item for date', dateStr, ':', item[deadlineKey], 'Minutes:', item[minKey])
+        }
+        
+        return match
       })
       
       const totalMinutes = itemsForDate.reduce((sum, item) => {
-        return sum + (parseFloat(item[minKey]) || 0)
+        const mins = parseFloat(item[minKey]) || 0
+        return sum + mins
       }, 0)
       
       const totalHours = totalMinutes / 60
