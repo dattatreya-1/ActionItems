@@ -26,7 +26,7 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
     return found ? found.key : null
   }
   
-  const deadlineKey = findColumnKey('deadline')
+  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
   const priorityKey = findColumnKey('priority')
   const businessTypeKey = findColumnKey('business type')
   const businessKey = findColumnKey('business')

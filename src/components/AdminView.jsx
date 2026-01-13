@@ -25,7 +25,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
   const ownerKey = findColumnKey('owner')
   const businessTypeKey = findColumnKey('business type')
   const statusKey = findColumnKey('status')
-  const deadlineKey = findColumnKey('deadline')
+  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
   const businessKey = findColumnKey('business')
   const minKey = findColumnKey('min')
 

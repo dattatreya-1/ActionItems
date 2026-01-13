@@ -16,7 +16,7 @@ export default function ReportsView({ data, columns }) {
     return found ? found.key : null
   }
   
-  const deadlineKey = findColumnKey('deadline')
+  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
   const minKey = findColumnKey('min')
   const ownerKey = findColumnKey('owner')
   
