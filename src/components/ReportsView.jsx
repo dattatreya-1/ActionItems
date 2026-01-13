@@ -1,477 +1,385 @@
 import React, { useState, useMemo } from 'react'
 
-export default function ReportsView({ data, columns }) {
-  const [rowDimension, setRowDimension] = useState('owner')
-  const [colDimension, setColDimension] = useState('business_type')
-  const [selectedOwner, setSelectedOwner] = useState('')
-  const [deadlineFrom, setDeadlineFrom] = useState('')
-  const [deadlineTo, setDeadlineTo] = useState('')
-  const [metric, setMetric] = useState('minutes') // 'minutes' or 'count'
-  const [reportType, setReportType] = useState('pivot') // 'pivot' or 'daywise'
+export default function ReportsView({ data = [], columns = [] }) {
+  const [activeView, setActiveView] = useState('pivot')
   
+  // Filters state
+  const [selectedOwner, setSelectedOwner] = useState('')
+  const [selectedBusiness, setSelectedBusiness] = useState('')
+  const [selectedBusinessType, setSelectedBusinessType] = useState('')
+  const [selectedProcess, setSelectedProcess] = useState('')
+  const [selectedProcessSubType, setSelectedProcessSubType] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  
+  // Pivot table state
+  const [pivotRows, setPivotRows] = useState('BUSINESS')
+  const [pivotColumns, setPivotColumns] = useState('OWNER')
+  const [pivotMetric, setPivotMetric] = useState('Minutes')
+
   // Helper to find column key
   const findColumnKey = (name) => {
     const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
     const found = columns.find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
     return found ? found.key : null
   }
-  
-  // Special handling for date column - prioritize exact "DATE" match
-  const findDateKey = () => {
-    // First try exact match for "DATE"
-    const exactDate = columns.find(c => 
-      String(c.label || '').toUpperCase() === 'DATE' || 
-      String(c.key || '').toUpperCase() === 'DATE'
-    )
-    if (exactDate) return exactDate.key
-    
-    // Then try "deadline"
-    return findColumnKey('deadline')
-  }
-  
-  const deadlineKey = findDateKey()
-  const minKey = findColumnKey('min') || findColumnKey('minutes')
+
+  // Find all column keys
   const ownerKey = findColumnKey('owner')
-  
-  console.log('=== ReportsView Debug ===')
-  console.log('Column keys:', { deadlineKey, minKey, ownerKey })
-  console.log('Filters:', { selectedOwner, deadlineFrom, deadlineTo })
-  console.log('Total data rows:', data.length)
-  console.log('All columns:', columns.map(c => c.key))
-  if (data.length > 0) {
-    console.log('Sample data row:', data[0])
-    console.log('Sample owner value:', data[0][ownerKey])
-    console.log('Sample date value:', data[0][deadlineKey])
-    console.log('Sample minutes value:', data[0][minKey])
-  }
-  
-  // Get unique owners for filter dropdown
-  const availableOwners = useMemo(() => {
-    return Array.from(new Set(data.map(d => d[ownerKey]).filter(Boolean))).sort()
-  }, [data, ownerKey])
-  
-  // Filter for date range and owner
+  const businessKey = findColumnKey('business')
+  const businessTypeKey = findColumnKey('business type')
+  const processKey = findColumnKey('process')
+  const processSubTypeKey = findColumnKey('process subtype')
+  const statusKey = findColumnKey('status')
+  const dateKey = findColumnKey('date')
+  const minKey = findColumnKey('min') || findColumnKey('minutes')
+
+  // Get unique values for filters
+  const owners = useMemo(() => Array.from(new Set(data.map(d => d[ownerKey]).filter(Boolean))), [data, ownerKey])
+  const businesses = useMemo(() => Array.from(new Set(data.map(d => d[businessKey]).filter(Boolean))), [data, businessKey])
+  const businessTypes = useMemo(() => Array.from(new Set(data.map(d => d[businessTypeKey]).filter(Boolean))), [data, businessTypeKey])
+  const processes = useMemo(() => Array.from(new Set(data.map(d => d[processKey]).filter(Boolean))), [data, processKey])
+  const processSubTypes = useMemo(() => Array.from(new Set(data.map(d => d[processSubTypeKey]).filter(Boolean))), [data, processSubTypeKey])
+  const statuses = useMemo(() => Array.from(new Set(data.map(d => d[statusKey]).filter(Boolean))), [data, statusKey])
+
+  // Filter data based on all filters
   const filteredData = useMemo(() => {
-    console.log('Filtering data...')
-    const filtered = data.filter(item => {
-      // Owner filter
-      if (selectedOwner && ownerKey && item[ownerKey] !== selectedOwner) {
-        return false
-      }
+    return data.filter(item => {
+      if (selectedOwner && item[ownerKey] !== selectedOwner) return false
+      if (selectedBusiness && item[businessKey] !== selectedBusiness) return false
+      if (selectedBusinessType && item[businessTypeKey] !== selectedBusinessType) return false
+      if (selectedProcess && item[processKey] !== selectedProcess) return false
+      if (selectedProcessSubType && item[processSubTypeKey] !== selectedProcessSubType) return false
+      if (selectedStatus && item[statusKey] !== selectedStatus) return false
       
-      // Deadline filter - only apply if dates are specified
-      if (deadlineKey && item[deadlineKey] && (deadlineFrom || deadlineTo)) {
-        // Normalize dates to YYYY-MM-DD format for proper comparison
-        const itemDateStr = String(item[deadlineKey]).split('T')[0] // Remove time portion if exists
-        
-        if (deadlineFrom && itemDateStr < deadlineFrom) return false
-        if (deadlineTo && itemDateStr > deadlineTo) return false
+      if (dateFrom && item[dateKey]) {
+        if (item[dateKey] < dateFrom) return false
+      }
+      if (dateTo && item[dateKey]) {
+        if (item[dateKey] > dateTo) return false
       }
       
       return true
     })
-    
-    console.log('Filtered data count:', filtered.length)
-    if (filtered.length > 0) {
-      console.log('Sample filtered item:', filtered[0])
-    }
-    return filtered
-  }, [data, selectedOwner, deadlineFrom, deadlineTo, ownerKey, deadlineKey])
-  
-  // Get available dimensions (exclude id, actions, min, deadline)
-  const availableDimensions = useMemo(() => {
-    return columns
-      .filter(c => !['id', 'actions', minKey, deadlineKey].includes(c.key))
-      .map(c => ({ key: c.key, label: c.label }))
-  }, [columns, minKey, deadlineKey])
-  
-  // Build pivot table
+  }, [data, selectedOwner, selectedBusiness, selectedBusinessType, selectedProcess, selectedProcessSubType, selectedStatus, dateFrom, dateTo, ownerKey, businessKey, businessTypeKey, processKey, processSubTypeKey, statusKey, dateKey])
+
+  // Pivot table data
   const pivotData = useMemo(() => {
-    console.log('Building pivot with rowDimension:', rowDimension, 'colDimension:', colDimension)
-    console.log('Filtered data for pivot:', filteredData.length, 'rows')
+    const rowValues = Array.from(new Set(filteredData.map(d => d[pivotRows] || '(blank)')))
+    const colValues = Array.from(new Set(filteredData.map(d => d[pivotColumns] || '(blank)')))
     
-    const pivot = {}
-    const colValues = new Set()
-    
-    filteredData.forEach((item, idx) => {
-      const rowValue = String(item[rowDimension] || '(blank)').trim()
-      const colValue = String(item[colDimension] || '(blank)').trim()
-      const minutes = parseFloat(item[minKey]) || 0
-      
-      if (idx < 3) {
-        console.log('Pivot item', idx, ':', {
-          rowDim: rowDimension,
-          rowValue,
-          colDim: colDimension,
-          colValue,
-          minutes,
-          minKey,
-          rawItem: item
-        })
-      }
-      
-      colValues.add(colValue)
-      
-      if (!pivot[rowValue]) {
-        pivot[rowValue] = {}
-      }
-      if (!pivot[rowValue][colValue]) {
-        pivot[rowValue][colValue] = { minutes: 0, count: 0 }
-      }
-      pivot[rowValue][colValue].minutes += minutes
-      pivot[rowValue][colValue].count += 1
-    })
-    
-    console.log('Pivot result:', {
-      rowKeys: Object.keys(pivot).sort(),
-      colKeys: Array.from(colValues).sort(),
-      pivotData: pivot
-    })
-    
-    return {
-      pivot,
-      rowKeys: Object.keys(pivot).sort(),
-      colKeys: Array.from(colValues).sort()
-    }
-  }, [filteredData, rowDimension, colDimension, minKey])
-  
-  // Calculate totals
-  const calculateTotals = (rowKey) => {
-    const totalMinutes = pivotData.colKeys.reduce((sum, colKey) => {
-      return sum + (pivotData.pivot[rowKey]?.[colKey]?.minutes || 0)
-    }, 0)
-    const totalCount = pivotData.colKeys.reduce((sum, colKey) => {
-      return sum + (pivotData.pivot[rowKey]?.[colKey]?.count || 0)
-    }, 0)
-    const totalHours = totalMinutes / 60
-    const totalDays = totalHours / 6
-    
-    return { totalMinutes, totalCount, totalHours, totalDays }
-  }
-  
-  const grandTotals = useMemo(() => {
-    const totalMinutes = pivotData.rowKeys.reduce((sum, rowKey) => {
-      return sum + calculateTotals(rowKey).totalMinutes
-    }, 0)
-    const totalCount = pivotData.rowKeys.reduce((sum, rowKey) => {
-      return sum + calculateTotals(rowKey).totalCount
-    }, 0)
-    const totalHours = totalMinutes / 60
-    const totalDays = totalHours / 6
-    
-    return { totalMinutes, totalCount, totalHours, totalDays }
-  }, [pivotData])
-  
-  // Day-wise workload calculation
-  const daywiseData = useMemo(() => {
-    // Get date range - default to next 7 days if not specified
-    const startDate = deadlineFrom ? new Date(deadlineFrom) : new Date()
-    const endDate = deadlineTo ? new Date(deadlineTo) : (() => {
-      const end = new Date()
-      end.setDate(end.getDate() + 7)
-      return end
-    })()
-    
-    console.log('Day-wise calculation:', { 
-      deadlineFrom, 
-      deadlineTo, 
-      selectedOwner, 
-      ownerKey, 
-      deadlineKey, 
-      minKey,
-      dataCount: data.length 
-    })
-    
-    // Create array of dates
-    const dates = []
-    const currentDate = new Date(startDate)
-    while (currentDate <= endDate) {
-      dates.push(new Date(currentDate))
-      currentDate.setDate(currentDate.getDate() + 1)
-    }
-    
-    // Aggregate data by date
-    const dailyWorkload = dates.map(date => {
-      const dateStr = date.toISOString().split('T')[0]
-      
-      const itemsForDate = data.filter(item => {
-        // Check owner using ownerKey
-        if (selectedOwner && ownerKey) {
-          const itemOwner = item[ownerKey]
-          if (itemOwner !== selectedOwner) return false
-        }
-        if (!deadlineKey || !item[deadlineKey]) return false
-        // Normalize item date to YYYY-MM-DD format
-        const itemDateStr = item[deadlineKey].split('T')[0]
-        const match = itemDateStr === dateStr
+    const result = rowValues.map(rowVal => {
+      const row = { [pivotRows]: rowVal }
+      colValues.forEach(colVal => {
+        const items = filteredData.filter(d => 
+          (d[pivotRows] || '(blank)') === rowVal && 
+          (d[pivotColumns] || '(blank)') === colVal
+        )
         
-        if (match) {
-          console.log('Found item for date', dateStr, ':', item[deadlineKey], 'Minutes:', item[minKey])
+        if (pivotMetric === 'Minutes') {
+          row[colVal] = items.reduce((sum, item) => sum + (parseFloat(item[minKey]) || 0), 0)
+        } else if (pivotMetric === 'Hours') {
+          row[colVal] = items.reduce((sum, item) => sum + (parseFloat(item[minKey]) || 0), 0) / 60
+        } else if (pivotMetric === 'Days') {
+          row[colVal] = items.reduce((sum, item) => sum + (parseFloat(item[minKey]) || 0), 0) / 60 / 6
+        } else {
+          row[colVal] = items.length
         }
-        
-        return match
       })
       
-      const totalMinutes = itemsForDate.reduce((sum, item) => {
-        const mins = parseFloat(item[minKey]) || 0
-        return sum + mins
-      }, 0)
+      // Calculate row total
+      row.TOTAL = colValues.reduce((sum, colVal) => sum + (row[colVal] || 0), 0)
       
-      const totalHours = totalMinutes / 60
-      const totalDays = totalHours / 6
-      
-      return {
-        date: dateStr,
-        displayDate: date.toLocaleDateString(),
-        minutes: totalMinutes,
-        hours: totalHours,
-        days: totalDays,
-        itemCount: itemsForDate.length
-      }
+      return row
     })
     
-    // Calculate totals
-    const totals = dailyWorkload.reduce((acc, day) => ({
-      minutes: acc.minutes + day.minutes,
-      hours: acc.hours + day.hours,
-      days: acc.days + day.days,
-      itemCount: acc.itemCount + day.itemCount
-    }), { minutes: 0, hours: 0, days: 0, itemCount: 0 })
+    // Add grand total row
+    const grandTotal = { [pivotRows]: 'GRAND TOTAL' }
+    colValues.forEach(colVal => {
+      grandTotal[colVal] = result.reduce((sum, row) => sum + (row[colVal] || 0), 0)
+    })
+    grandTotal.TOTAL = colValues.reduce((sum, colVal) => sum + (grandTotal[colVal] || 0), 0)
     
-    return { dailyWorkload, totals }
-  }, [data, deadlineFrom, deadlineTo, selectedOwner, deadlineKey, minKey, ownerKey])
-  
-  return (
-    <div className="reports-view">
-      <h2>Reports - Workload Analysis</h2>
+    return { rows: result, columns: colValues, grandTotal }
+  }, [filteredData, pivotRows, pivotColumns, pivotMetric, minKey])
+
+  // Day-wise workload
+  const daywiseData = useMemo(() => {
+    const dateMap = {}
+    
+    filteredData.forEach(item => {
+      const date = item[dateKey]
+      if (!date) return
       
-      {/* Report Type Toggle */}
-      <div style={{marginBottom: '1rem', display: 'flex', gap: '0.5rem'}}>
+      if (!dateMap[date]) {
+        dateMap[date] = {
+          date,
+          minutes: 0,
+          items: 0,
+          byOwner: {}
+        }
+      }
+      
+      const mins = parseFloat(item[minKey]) || 0
+      dateMap[date].minutes += mins
+      dateMap[date].items += 1
+      
+      const owner = item[ownerKey] || 'Unknown'
+      if (!dateMap[date].byOwner[owner]) {
+        dateMap[date].byOwner[owner] = 0
+      }
+      dateMap[date].byOwner[owner] += mins
+    })
+    
+    return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date))
+  }, [filteredData, dateKey, minKey, ownerKey])
+
+  return (
+    <div style={{ padding: '1rem' }}>
+      {/* Filters */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+        gap: '1rem', 
+        marginBottom: '2rem' 
+      }}>
+        <div style={{ background: '#e0f2fe', padding: '1rem', borderRadius: '8px', border: '2px solid #0ea5e9' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#0c4a6e' }}>Owner:</label>
+          <select 
+            value={selectedOwner} 
+            onChange={e => setSelectedOwner(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #0ea5e9' }}
+          >
+            <option value="">(all)</option>
+            {owners.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#fce7f3', padding: '1rem', borderRadius: '8px', border: '2px solid #ec4899' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#831843' }}>Business:</label>
+          <select 
+            value={selectedBusiness} 
+            onChange={e => setSelectedBusiness(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ec4899' }}
+          >
+            <option value="">(all)</option>
+            {businesses.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#ddd6fe', padding: '1rem', borderRadius: '8px', border: '2px solid #8b5cf6' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#4c1d95' }}>Business Type:</label>
+          <select 
+            value={selectedBusinessType} 
+            onChange={e => setSelectedBusinessType(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #8b5cf6' }}
+          >
+            <option value="">(all)</option>
+            {businessTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#fef3c7', padding: '1rem', borderRadius: '8px', border: '2px solid #f59e0b' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#78350f' }}>Process:</label>
+          <select 
+            value={selectedProcess} 
+            onChange={e => setSelectedProcess(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #f59e0b' }}
+          >
+            <option value="">(all)</option>
+            {processes.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#d1fae5', padding: '1rem', borderRadius: '8px', border: '2px solid #10b981' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#064e3b' }}>Process SubType:</label>
+          <select 
+            value={selectedProcessSubType} 
+            onChange={e => setSelectedProcessSubType(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #10b981' }}
+          >
+            <option value="">(all)</option>
+            {processSubTypes.map(pst => <option key={pst} value={pst}>{pst}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#fee2e2', padding: '1rem', borderRadius: '8px', border: '2px solid #ef4444' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#7f1d1d' }}>Status:</label>
+          <select 
+            value={selectedStatus} 
+            onChange={e => setSelectedStatus(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ef4444' }}
+          >
+            <option value="">(all)</option>
+            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        <div style={{ background: '#e0e7ff', padding: '1rem', borderRadius: '8px', border: '2px solid #6366f1' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#312e81' }}>From Date:</label>
+          <input 
+            type="date" 
+            value={dateFrom} 
+            onChange={e => setDateFrom(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #6366f1' }}
+          />
+        </div>
+
+        <div style={{ background: '#fecaca', padding: '1rem', borderRadius: '8px', border: '2px solid #f87171' }}>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#7f1d1d' }}>To Date:</label>
+          <input 
+            type="date" 
+            value={dateTo} 
+            onChange={e => setDateTo(e.target.value)}
+            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #f87171' }}
+          />
+        </div>
+      </div>
+
+      {/* View Tabs */}
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
         <button 
-          onClick={() => setReportType('pivot')}
+          onClick={() => setActiveView('pivot')}
           style={{
-            padding: '0.5rem 1rem',
-            background: reportType === 'pivot' ? '#3b82f6' : '#e5e7eb',
-            color: reportType === 'pivot' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: '1px solid #ddd',
             cursor: 'pointer',
-            fontWeight: reportType === 'pivot' ? 'bold' : 'normal'
+            background: activeView === 'pivot' ? '#2b6cb0' : 'white',
+            color: activeView === 'pivot' ? 'white' : '#333'
           }}
         >
           Pivot Table
         </button>
         <button 
-          onClick={() => setReportType('daywise')}
+          onClick={() => setActiveView('daywise')}
           style={{
-            padding: '0.5rem 1rem',
-            background: reportType === 'daywise' ? '#3b82f6' : '#e5e7eb',
-            color: reportType === 'daywise' ? 'white' : '#374151',
-            border: 'none',
-            borderRadius: '4px',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: '1px solid #ddd',
             cursor: 'pointer',
-            fontWeight: reportType === 'daywise' ? 'bold' : 'normal'
+            background: activeView === 'daywise' ? '#2b6cb0' : 'white',
+            color: activeView === 'daywise' ? 'white' : '#333'
           }}
         >
           Day-wise Workload
         </button>
       </div>
-      
-      <div className="filters" style={{marginBottom: '1rem'}}>
-        <label>
-          Team Member:
-          <select value={selectedOwner} onChange={e => setSelectedOwner(e.target.value)}>
-            <option value="">(all)</option>
-            {availableOwners.map(owner => (
-              <option key={owner} value={owner}>{owner}</option>
-            ))}
-          </select>
-        </label>
-        
-        <label>
-          Deadline From:
-          <input 
-            type="date" 
-            value={deadlineFrom} 
-            onChange={e => setDeadlineFrom(e.target.value)}
-            placeholder="Start date"
-          />
-        </label>
-        
-        <label>
-          Deadline To:
-          <input 
-            type="date" 
-            value={deadlineTo} 
-            onChange={e => setDeadlineTo(e.target.value)}
-            placeholder="End date"
-          />
-        </label>
-      </div>
-      
-      {reportType === 'daywise' ? (
-        /* Day-wise Workload Table */
-        <div className="table-wrap" style={{overflowX: 'auto'}}>
-          <table className="pivot-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th style={{textAlign: 'right'}}>Minutes</th>
-                <th style={{textAlign: 'right'}}>Hours</th>
-                <th style={{textAlign: 'right'}}>Days (÷6)</th>
-                <th style={{textAlign: 'right'}}>Items</th>
-              </tr>
-            </thead>
-            <tbody>
-              {daywiseData.dailyWorkload.map(day => (
-                <tr key={day.date}>
-                  <td style={{fontWeight: '600'}}>{day.displayDate}</td>
-                  <td style={{textAlign: 'right'}}>{day.minutes.toFixed(0)}</td>
-                  <td style={{textAlign: 'right'}}>{day.hours.toFixed(2)}</td>
-                  <td style={{textAlign: 'right'}}>{day.days.toFixed(2)}</td>
-                  <td style={{textAlign: 'right'}}>{day.itemCount}</td>
-                </tr>
-              ))}
-              <tr style={{background: '#dbeafe', fontWeight: 'bold'}}>
-                <td>TOTAL</td>
-                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                  {daywiseData.totals.minutes.toFixed(0)}
-                </td>
-                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                  {daywiseData.totals.hours.toFixed(2)}
-                </td>
-                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                  {daywiseData.totals.days.toFixed(2)}
-                </td>
-                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                  {daywiseData.totals.itemCount}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        /* Pivot Table */
+
+      {/* Pivot Table View */}
+      {activeView === 'pivot' && (
         <div>
-      <div className="pivot-controls" style={{display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center'}}>
-        <label>
-          <strong>Metric:</strong>
-          <select value={metric} onChange={e => setMetric(e.target.value)} style={{marginLeft: '0.5rem'}}>
-            <option value="minutes">Minutes</option>
-            <option value="count">Number of Deliverables</option>
-          </select>
-        </label>
-        
-        <label>
-          <strong>Rows:</strong>
-          <select value={rowDimension} onChange={e => setRowDimension(e.target.value)} style={{marginLeft: '0.5rem'}}>
-            {availableDimensions.map(dim => (
-              <option key={dim.key} value={dim.key}>{dim.label}</option>
-            ))}
-          </select>
-        </label>
-        
-        <label>
-          <strong>Columns:</strong>
-          <select value={colDimension} onChange={e => setColDimension(e.target.value)} style={{marginLeft: '0.5rem'}}>
-            {availableDimensions.map(dim => (
-              <option key={dim.key} value={dim.key}>{dim.label}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      
-      {filteredData.length === 0 ? (
-        <div style={{padding: '2rem', textAlign: 'center', color: '#6b7280'}}>
-          No action items found. Try adjusting your filters.
-        </div>
-      ) : (
-        <div className="table-wrap" style={{overflowX: 'auto'}}>
-          <table className="pivot-table">
-            <thead>
-              <tr>
-                <th style={{position: 'sticky', left: 0, background: '#fafafa', zIndex: 3}}>
-                  {availableDimensions.find(d => d.key === rowDimension)?.label || rowDimension}
-                </th>
-                {pivotData.colKeys.map(colKey => (
-                  <th key={colKey} style={{minWidth: '100px'}}>{colKey}</th>
-                ))}
-                <th style={{background: '#f0f9ff', fontWeight: 'bold'}}>
-                  {metric === 'minutes' ? 'Total Minutes' : 'Total Deliverables'}
-                </th>
-                {metric === 'minutes' && (
-                  <>
-                    <th style={{background: '#f0f9ff', fontWeight: 'bold'}}>Total Hours</th>
-                    <th style={{background: '#f0f9ff', fontWeight: 'bold'}}>Total Days (÷6)</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {pivotData.rowKeys.map(rowKey => {
-                const totals = calculateTotals(rowKey)
-                return (
-                  <tr key={rowKey}>
-                    <td style={{position: 'sticky', left: 0, background: 'white', fontWeight: '600', zIndex: 2}}>
-                      {rowKey}
+          <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', background: '#f0f9ff', padding: '1rem', borderRadius: '8px' }}>
+            <label style={{ fontWeight: 'bold' }}>
+              Rows:
+              <select value={pivotRows} onChange={e => setPivotRows(e.target.value)} style={{ marginLeft: '0.5rem', padding: '0.5rem' }}>
+                <option value={businessKey}>BUSINESS</option>
+                <option value={ownerKey}>OWNER</option>
+                <option value={businessTypeKey}>BUSINESS TYPE</option>
+                <option value={processKey}>PROCESS</option>
+                <option value={statusKey}>STATUS</option>
+              </select>
+            </label>
+
+            <label style={{ fontWeight: 'bold' }}>
+              Columns:
+              <select value={pivotColumns} onChange={e => setPivotColumns(e.target.value)} style={{ marginLeft: '0.5rem', padding: '0.5rem' }}>
+                <option value={ownerKey}>OWNER</option>
+                <option value={businessKey}>BUSINESS</option>
+                <option value={businessTypeKey}>BUSINESS TYPE</option>
+                <option value={processKey}>PROCESS</option>
+                <option value={statusKey}>STATUS</option>
+              </select>
+            </label>
+
+            <label style={{ fontWeight: 'bold' }}>
+              Metric:
+              <select value={pivotMetric} onChange={e => setPivotMetric(e.target.value)} style={{ marginLeft: '0.5rem', padding: '0.5rem' }}>
+                <option value="Minutes">Minutes</option>
+                <option value="Hours">Hours</option>
+                <option value="Days">Days (÷6)</option>
+                <option value="Count">Count</option>
+              </select>
+            </label>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#2b6cb0', color: 'white' }}>
+                  <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'left' }}>{pivotRows}</th>
+                  {pivotData.columns.map(col => (
+                    <th key={col} style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>{col}</th>
+                  ))}
+                  <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right', background: '#1e40af' }}>TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pivotData.rows.map((row, idx) => (
+                  <tr key={idx} style={{ background: idx % 2 === 0 ? '#f9fafb' : 'white' }}>
+                    <td style={{ padding: '0.75rem', border: '1px solid #ddd', fontWeight: 'bold' }}>{row[pivotRows]}</td>
+                    {pivotData.columns.map(col => (
+                      <td key={col} style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>
+                        {row[col] ? (pivotMetric === 'Count' ? row[col] : row[col].toFixed(2)) : '-'}
+                      </td>
+                    ))}
+                    <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right', fontWeight: 'bold', background: '#e0f2fe' }}>
+                      {row.TOTAL ? (pivotMetric === 'Count' ? row.TOTAL : row.TOTAL.toFixed(2)) : '-'}
                     </td>
-                    {pivotData.colKeys.map(colKey => {
-                      const cellData = pivotData.pivot[rowKey]?.[colKey]
-                      const value = metric === 'minutes' ? cellData?.minutes : cellData?.count
-                      return (
-                        <td key={colKey} style={{textAlign: 'right'}}>
-                          {value ? (metric === 'minutes' ? value.toFixed(0) : value) : '-'}
-                        </td>
-                      )
-                    })}
-                    <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
-                      {metric === 'minutes' ? totals.totalMinutes.toFixed(0) : totals.totalCount}
-                    </td>
-                    {metric === 'minutes' && (
-                      <>
-                        <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
-                          {totals.totalHours.toFixed(2)}
-                        </td>
-                        <td style={{textAlign: 'right', background: '#f0f9ff', fontWeight: 'bold'}}>
-                          {totals.totalDays.toFixed(2)}
-                        </td>
-                      </>
-                    )}
                   </tr>
-                )
-              })}
-              <tr style={{background: '#dbeafe', fontWeight: 'bold'}}>
-                <td style={{position: 'sticky', left: 0, background: '#dbeafe', zIndex: 2}}>GRAND TOTAL</td>
-                {pivotData.colKeys.map(colKey => {
-                  const colTotal = pivotData.rowKeys.reduce((sum, rowKey) => {
-                    const cellData = pivotData.pivot[rowKey]?.[colKey]
-                    return sum + (metric === 'minutes' ? (cellData?.minutes || 0) : (cellData?.count || 0))
-                  }, 0)
-                  return (
-                    <td key={colKey} style={{textAlign: 'right'}}>
-                      {colTotal > 0 ? (metric === 'minutes' ? colTotal.toFixed(0) : colTotal) : '-'}
+                ))}
+                <tr style={{ background: '#2b6cb0', color: 'white', fontWeight: 'bold' }}>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd' }}>GRAND TOTAL</td>
+                  {pivotData.columns.map(col => (
+                    <td key={col} style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>
+                      {pivotData.grandTotal[col] ? (pivotMetric === 'Count' ? pivotData.grandTotal[col] : pivotData.grandTotal[col].toFixed(2)) : '-'}
                     </td>
-                  )
-                })}
-                <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                  {metric === 'minutes' ? grandTotals.totalMinutes.toFixed(0) : grandTotals.totalCount}
-                </td>
-                {metric === 'minutes' && (
-                  <>
-                    <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                      {grandTotals.totalHours.toFixed(2)}
-                    </td>
-                    <td style={{textAlign: 'right', background: '#3b82f6', color: 'white'}}>
-                      {grandTotals.totalDays.toFixed(2)}
-                    </td>
-                  </>
-                )}
-              </tr>
-            </tbody>
-          </table>
+                  ))}
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right', background: '#1e40af' }}>
+                    {pivotData.grandTotal.TOTAL ? (pivotMetric === 'Count' ? pivotData.grandTotal.TOTAL : pivotData.grandTotal.TOTAL.toFixed(2)) : '-'}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
-      </div>
+
+      {/* Day-wise Workload View */}
+      {activeView === 'daywise' && (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#2b6cb0', color: 'white' }}>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'left' }}>DATE</th>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>MINUTES</th>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>HOURS</th>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>DAYS (÷6)</th>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>ITEMS</th>
+                <th style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'left' }}>BY USER</th>
+              </tr>
+            </thead>
+            <tbody>
+              {daywiseData.map((day, idx) => (
+                <tr key={day.date} style={{ background: idx % 2 === 0 ? '#f9fafb' : 'white' }}>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', fontWeight: 'bold' }}>{day.date}</td>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>{day.minutes.toFixed(0)}</td>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>{(day.minutes / 60).toFixed(2)}</td>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>{(day.minutes / 60 / 6).toFixed(2)}</td>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd', textAlign: 'right' }}>{day.items}</td>
+                  <td style={{ padding: '0.75rem', border: '1px solid #ddd' }}>
+                    {Object.entries(day.byOwner).map(([owner, mins]) => (
+                      <span key={owner} style={{ marginRight: '1rem', fontSize: '0.875rem' }}>
+                        <strong>{owner}:</strong> {mins.toFixed(0)}min
+                      </span>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

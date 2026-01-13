@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { getColumns, createActionItem } from '../services/dataService'
 import EditModal from './EditModal'
 import AddModal from './AddModal'
+import ReportsView from './ReportsView'
 
 export default function AdminView({ initialData = [], columns = [] }) {
   const [activeTab, setActiveTab] = useState('data')
@@ -92,11 +93,33 @@ export default function AdminView({ initialData = [], columns = [] }) {
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
         <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
           <h2>Admin</h2>
+          <div style={{display: 'flex', gap: '0.5rem'}}>
+            <button 
+              className={activeTab === 'data' ? 'tab-active' : 'tab-inactive'}
+              onClick={() => setActiveTab('data')}
+              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'data' ? '#2b6cb0' : 'white', color: activeTab === 'data' ? 'white' : '#333'}}
+            >
+              Data
+            </button>
+            <button 
+              className={activeTab === 'reports' ? 'tab-active' : 'tab-inactive'}
+              onClick={() => setActiveTab('reports')}
+              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'reports' ? '#2b6cb0' : 'white', color: activeTab === 'reports' ? 'white' : '#333'}}
+            >
+              Reports
+            </button>
+          </div>
         </div>
-        <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+        {activeTab === 'data' && (
+          <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+        )}
       </div>
 
-      <div className="filters">
+      {activeTab === 'reports' ? (
+        <ReportsView data={initialData} columns={cols} />
+      ) : (
+        <>
+          <div className="filters">
         <label>
           Owner:
           <select value={owner} onChange={e => setOwner(e.target.value)}>
@@ -195,6 +218,8 @@ export default function AdminView({ initialData = [], columns = [] }) {
           </div>
         </div>
       </div>
+        </>
+      )}
       
       {editingRow && (
         <EditModal row={editingRow} columns={cols} onClose={() => setEditingRow(null)} onSave={async (updated) => {
