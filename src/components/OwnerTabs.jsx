@@ -31,9 +31,15 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   const businessTypeKey = findColumnKey('business type')
   const businessKey = findColumnKey('business')
   const statusKey = findColumnKey('status')
+  const ownerKey = findColumnKey('owner')
+  
+  console.log('Found column keys:', { ownerKey, deadlineKey, priorityKey, businessTypeKey, businessKey, statusKey })
   
   // Get unique values for dropdowns
-  const ownerData = data.filter(d => d.owner === active)
+  const ownerData = data.filter(d => {
+    const ownerValue = ownerKey ? d[ownerKey] : d.owner
+    return ownerValue === active
+  })
   
   const priorities = useMemo(() => {
     return Array.from(new Set(ownerData.map(d => d[priorityKey] || '').filter(Boolean)))
