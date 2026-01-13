@@ -1,6 +1,6 @@
 # Action Tracker Pro
 
-Simple React app to display action items from `gen-lang-client-0815432790.oberoiventures.actionitemstable`.
+Simple React app to display action items from `gen-lang-client-0815432790.oberoiventures.actionitemsupdated`.
 
 Getting started
 
@@ -43,7 +43,7 @@ Windows PowerShell example:
       --region us-central1 \
       --platform managed \
       --allow-unauthenticated \
-      --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemstable"
+      --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemsupdated"
 
   Troubleshooting on Cloud Run:
   - Check health: curl -i https://YOUR-SERVICE-URL/healthz

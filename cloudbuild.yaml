@@ -33,7 +33,7 @@ steps:
           --platform managed \
           --allow-unauthenticated \
           --service-account oberoiventuresactioitems@gen-lang-client-0815432790.iam.gserviceaccount.com \
-          --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemstable"
+          --set-env-vars BQ_TABLE="gen-lang-client-0815432790.oberoiventures.actionitemsupdated"
 
 images:
   - 'gcr.io/$PROJECT_ID/actionitems:latest'

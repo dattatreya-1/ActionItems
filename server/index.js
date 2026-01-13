@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 5000
 
 // Table reference: project.dataset.table
-const TABLE_FULL = process.env.BQ_TABLE || 'gen-lang-client-0815432790.oberoiventures.actionitemstable'
+const TABLE_FULL = process.env.BQ_TABLE || 'gen-lang-client-0815432790.oberoiventures.actionitemsupdated'
 
 // Resolve dist path once and reuse
 const distPath = path.join(process.cwd(), 'dist')
