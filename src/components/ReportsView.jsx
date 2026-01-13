@@ -20,6 +20,10 @@ export default function ReportsView({ data, columns }) {
   const minKey = findColumnKey('min') || findColumnKey('minutes')
   const ownerKey = findColumnKey('owner')
   
+  console.log('ReportsView keys:', { deadlineKey, minKey, ownerKey })
+  console.log('Filters:', { selectedOwner, deadlineFrom, deadlineTo })
+  console.log('Total data rows:', data.length)
+  
   // Get unique owners for filter dropdown
   const availableOwners = useMemo(() => {
     return Array.from(new Set(data.map(d => d[ownerKey]).filter(Boolean))).sort()
@@ -27,14 +31,17 @@ export default function ReportsView({ data, columns }) {
   
   // Filter for date range and owner
   const filteredData = useMemo(() => {
-    return data.filter(item => {
+    console.log('Filtering data...')
+    const filtered = data.filter(item => {
       // Owner filter
-      if (selectedOwner && item[ownerKey] !== selectedOwner) return false
+      if (selectedOwner && ownerKey && item[ownerKey] !== selectedOwner) {
+        return false
+      }
       
       // Deadline filter - only apply if dates are specified
       if (deadlineKey && item[deadlineKey] && (deadlineFrom || deadlineTo)) {
         // Normalize dates to YYYY-MM-DD format for proper comparison
-        const itemDateStr = item[deadlineKey].split('T')[0] // Remove time portion if exists
+        const itemDateStr = String(item[deadlineKey]).split('T')[0] // Remove time portion if exists
         
         if (deadlineFrom && itemDateStr < deadlineFrom) return false
         if (deadlineTo && itemDateStr > deadlineTo) return false
@@ -42,6 +49,12 @@ export default function ReportsView({ data, columns }) {
       
       return true
     })
+    
+    console.log('Filtered data count:', filtered.length)
+    if (filtered.length > 0) {
+      console.log('Sample filtered item:', filtered[0])
+    }
+    return filtered
   }, [data, selectedOwner, deadlineFrom, deadlineTo, ownerKey, deadlineKey])
   
   // Get available dimensions (exclude id, actions, min, deadline)
