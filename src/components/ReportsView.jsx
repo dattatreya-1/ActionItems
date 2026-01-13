@@ -16,13 +16,34 @@ export default function ReportsView({ data, columns }) {
     return found ? found.key : null
   }
   
-  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
+  // Special handling for date column - prioritize exact "DATE" match
+  const findDateKey = () => {
+    // First try exact match for "DATE"
+    const exactDate = columns.find(c => 
+      String(c.label || '').toUpperCase() === 'DATE' || 
+      String(c.key || '').toUpperCase() === 'DATE'
+    )
+    if (exactDate) return exactDate.key
+    
+    // Then try "deadline"
+    return findColumnKey('deadline')
+  }
+  
+  const deadlineKey = findDateKey()
   const minKey = findColumnKey('min') || findColumnKey('minutes')
   const ownerKey = findColumnKey('owner')
   
-  console.log('ReportsView keys:', { deadlineKey, minKey, ownerKey })
+  console.log('=== ReportsView Debug ===')
+  console.log('Column keys:', { deadlineKey, minKey, ownerKey })
   console.log('Filters:', { selectedOwner, deadlineFrom, deadlineTo })
   console.log('Total data rows:', data.length)
+  console.log('All columns:', columns.map(c => c.key))
+  if (data.length > 0) {
+    console.log('Sample data row:', data[0])
+    console.log('Sample owner value:', data[0][ownerKey])
+    console.log('Sample date value:', data[0][deadlineKey])
+    console.log('Sample minutes value:', data[0][minKey])
+  }
   
   // Get unique owners for filter dropdown
   const availableOwners = useMemo(() => {
