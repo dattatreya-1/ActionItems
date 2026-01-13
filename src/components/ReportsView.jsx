@@ -66,13 +66,28 @@ export default function ReportsView({ data, columns }) {
   
   // Build pivot table
   const pivotData = useMemo(() => {
+    console.log('Building pivot with rowDimension:', rowDimension, 'colDimension:', colDimension)
+    console.log('Filtered data for pivot:', filteredData.length, 'rows')
+    
     const pivot = {}
     const colValues = new Set()
     
-    filteredData.forEach(item => {
-      const rowValue = item[rowDimension] || '(blank)'
-      const colValue = item[colDimension] || '(blank)'
+    filteredData.forEach((item, idx) => {
+      const rowValue = String(item[rowDimension] || '(blank)').trim()
+      const colValue = String(item[colDimension] || '(blank)').trim()
       const minutes = parseFloat(item[minKey]) || 0
+      
+      if (idx < 3) {
+        console.log('Pivot item', idx, ':', {
+          rowDim: rowDimension,
+          rowValue,
+          colDim: colDimension,
+          colValue,
+          minutes,
+          minKey,
+          rawItem: item
+        })
+      }
       
       colValues.add(colValue)
       
@@ -84,6 +99,12 @@ export default function ReportsView({ data, columns }) {
       }
       pivot[rowValue][colValue].minutes += minutes
       pivot[rowValue][colValue].count += 1
+    })
+    
+    console.log('Pivot result:', {
+      rowKeys: Object.keys(pivot).sort(),
+      colKeys: Array.from(colValues).sort(),
+      pivotData: pivot
     })
     
     return {
