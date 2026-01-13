@@ -17,7 +17,7 @@ export default function ReportsView({ data, columns }) {
   }
   
   const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
-  const minKey = findColumnKey('min')
+  const minKey = findColumnKey('min') || findColumnKey('minutes')
   const ownerKey = findColumnKey('owner')
   
   // Get unique owners for filter dropdown
@@ -26,7 +26,7 @@ export default function ReportsView({ data, columns }) {
   }, [data, ownerKey])
   
   // Filter for date range and owner
-  const dateFilteredData = useMemo(() => {
+  const filteredData = useMemo(() => {
     const from = deadlineFrom ? new Date(deadlineFrom) : null
     const to = deadlineTo ? new Date(deadlineTo) : null
     
@@ -34,34 +34,16 @@ export default function ReportsView({ data, columns }) {
       // Owner filter
       if (selectedOwner && item[ownerKey] !== selectedOwner) return false
       
-      // Deadline filter
-      if (!deadlineKey || !item[deadlineKey]) return false
-      const deadline = new Date(item[deadlineKey])
-      if (from && deadline < from) return false
-      if (to && deadline > to) return false
+      // Deadline filter - only apply if dates are specified
+      if (deadlineKey && item[deadlineKey] && (from || to)) {
+        const deadline = new Date(item[deadlineKey])
+        if (from && deadline < from) return false
+        if (to && deadline > to) return false
+      }
       
       return true
     })
   }, [data, selectedOwner, deadlineFrom, deadlineTo, ownerKey, deadlineKey])
-  
-  // Default to next 7 days if no custom range
-  const shouldUseDefault = !deadlineFrom && !deadlineTo
-  
-  // Filter for next 7 days (default behavior)
-  const today = new Date()
-  const next7Days = new Date(today)
-  next7Days.setDate(today.getDate() + 7)
-  
-  const filteredData = useMemo(() => {
-    if (shouldUseDefault) {
-      return dateFilteredData.filter(item => {
-        if (!deadlineKey || !item[deadlineKey]) return false
-        const deadline = new Date(item[deadlineKey])
-        return deadline >= today && deadline <= next7Days
-      })
-    }
-    return dateFilteredData
-  }, [dateFilteredData, shouldUseDefault, deadlineKey])
   
   // Get available dimensions (exclude id, actions, min, deadline)
   const availableDimensions = useMemo(() => {
@@ -219,13 +201,6 @@ export default function ReportsView({ data, columns }) {
         </button>
       </div>
       
-      <p style={{color: '#6b7280', marginBottom: '1rem'}}>
-        {shouldUseDefault 
-          ? `Showing action items with deadlines from ${today.toLocaleDateString()} to ${next7Days.toLocaleDateString()} (next 7 days)`
-          : `Showing action items based on selected filters`
-        }
-      </p>
-      
       <div className="filters" style={{marginBottom: '1rem'}}>
         <label>
           Team Member:
@@ -332,7 +307,7 @@ export default function ReportsView({ data, columns }) {
       
       {filteredData.length === 0 ? (
         <div style={{padding: '2rem', textAlign: 'center', color: '#6b7280'}}>
-          No action items with deadlines in the next 7 days
+          No action items found. Try adjusting your filters.
         </div>
       ) : (
         <div className="table-wrap" style={{overflowX: 'auto'}}>
