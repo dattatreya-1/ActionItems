@@ -13,11 +13,6 @@ export default function ReportsView({ data = [], columns = [] }) {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   
-  // Pivot table state
-  const [pivotRows, setPivotRows] = useState('BUSINESS')
-  const [pivotColumns, setPivotColumns] = useState('OWNER')
-  const [pivotMetric, setPivotMetric] = useState('Minutes')
-
   // Helper to find column key
   const findColumnKey = (name) => {
     const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -34,6 +29,27 @@ export default function ReportsView({ data = [], columns = [] }) {
   const statusKey = findColumnKey('status')
   const dateKey = findColumnKey('date')
   const minKey = findColumnKey('min') || findColumnKey('minutes')
+  
+  // Pivot table state - use actual column keys
+  const [pivotRows, setPivotRows] = useState(businessKey || 'BUSINESS')
+  const [pivotColumns, setPivotColumns] = useState(ownerKey || 'OWNER')
+  const [pivotMetric, setPivotMetric] = useState('Minutes')
+  
+  // Update pivot defaults when keys are available
+  React.useEffect(() => {
+    if (businessKey && pivotRows === 'BUSINESS') setPivotRows(businessKey)
+    if (ownerKey && pivotColumns === 'OWNER') setPivotColumns(ownerKey)
+  }, [businessKey, ownerKey])
+  
+  console.log('=== ReportsView Debug ===')
+  console.log('Column keys:', { ownerKey, businessKey, businessTypeKey, processKey, dateKey, minKey })
+  console.log('Pivot settings:', { pivotRows, pivotColumns, pivotMetric })
+  console.log('Total data rows:', data.length)
+  if (data.length > 0) {
+    console.log('Sample data:', data[0])
+    console.log('Sample owner:', data[0][ownerKey])
+    console.log('Sample business:', data[0][businessKey])
+  }
 
   // Get unique values for filters
   const owners = useMemo(() => Array.from(new Set(data.map(d => d[ownerKey]).filter(Boolean))), [data, ownerKey])
@@ -66,8 +82,17 @@ export default function ReportsView({ data = [], columns = [] }) {
 
   // Pivot table data
   const pivotData = useMemo(() => {
+    console.log('=== PIVOT TABLE DEBUG ===')
+    console.log('pivotRows key:', pivotRows)
+    console.log('pivotColumns key:', pivotColumns)
+    console.log('pivotMetric:', pivotMetric)
+    console.log('filteredData length:', filteredData.length)
+    
     const rowValues = Array.from(new Set(filteredData.map(d => d[pivotRows] || '(blank)')))
     const colValues = Array.from(new Set(filteredData.map(d => d[pivotColumns] || '(blank)')))
+    
+    console.log('Row values:', rowValues)
+    console.log('Column values:', colValues)
     
     const result = rowValues.map(rowVal => {
       const row = { [pivotRows]: rowVal }
@@ -76,6 +101,8 @@ export default function ReportsView({ data = [], columns = [] }) {
           (d[pivotRows] || '(blank)') === rowVal && 
           (d[pivotColumns] || '(blank)') === colVal
         )
+        
+        console.log(`Items for ${rowVal} x ${colVal}:`, items.length)
         
         if (pivotMetric === 'Minutes') {
           row[colVal] = items.reduce((sum, item) => sum + (parseFloat(item[minKey]) || 0), 0)
@@ -101,16 +128,28 @@ export default function ReportsView({ data = [], columns = [] }) {
     })
     grandTotal.TOTAL = colValues.reduce((sum, colVal) => sum + (grandTotal[colVal] || 0), 0)
     
+    console.log('Pivot result:', result)
+    console.log('Grand total:', grandTotal)
+    
     return { rows: result, columns: colValues, grandTotal }
   }, [filteredData, pivotRows, pivotColumns, pivotMetric, minKey])
 
   // Day-wise workload
   const daywiseData = useMemo(() => {
+    console.log('=== DAY-WISE WORKLOAD DEBUG ===')
+    console.log('dateKey:', dateKey)
+    console.log('minKey:', minKey)
+    console.log('ownerKey:', ownerKey)
+    console.log('filteredData length:', filteredData.length)
+    
     const dateMap = {}
     
     filteredData.forEach(item => {
       const date = item[dateKey]
-      if (!date) return
+      if (!date) {
+        console.log('Skipping item with no date:', item)
+        return
+      }
       
       if (!dateMap[date]) {
         dateMap[date] = {
@@ -132,7 +171,11 @@ export default function ReportsView({ data = [], columns = [] }) {
       dateMap[date].byOwner[owner] += mins
     })
     
-    return Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date))
+    console.log('Date map:', dateMap)
+    const result = Object.values(dateMap).sort((a, b) => a.date.localeCompare(b.date))
+    console.log('Day-wise result:', result)
+    
+    return result
   }, [filteredData, dateKey, minKey, ownerKey])
 
   return (
