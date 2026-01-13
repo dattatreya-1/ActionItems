@@ -27,18 +27,17 @@ export default function ReportsView({ data, columns }) {
   
   // Filter for date range and owner
   const filteredData = useMemo(() => {
-    const from = deadlineFrom ? new Date(deadlineFrom) : null
-    const to = deadlineTo ? new Date(deadlineTo) : null
-    
     return data.filter(item => {
       // Owner filter
       if (selectedOwner && item[ownerKey] !== selectedOwner) return false
       
       // Deadline filter - only apply if dates are specified
-      if (deadlineKey && item[deadlineKey] && (from || to)) {
-        const deadline = new Date(item[deadlineKey])
-        if (from && deadline < from) return false
-        if (to && deadline > to) return false
+      if (deadlineKey && item[deadlineKey] && (deadlineFrom || deadlineTo)) {
+        // Normalize dates to YYYY-MM-DD format for proper comparison
+        const itemDateStr = item[deadlineKey].split('T')[0] // Remove time portion if exists
+        
+        if (deadlineFrom && itemDateStr < deadlineFrom) return false
+        if (deadlineTo && itemDateStr > deadlineTo) return false
       }
       
       return true
@@ -133,8 +132,9 @@ export default function ReportsView({ data, columns }) {
       const itemsForDate = data.filter(item => {
         if (selectedOwner && item[ownerKey] !== selectedOwner) return false
         if (!deadlineKey || !item[deadlineKey]) return false
-        const itemDate = new Date(item[deadlineKey]).toISOString().split('T')[0]
-        return itemDate === dateStr
+        // Normalize item date to YYYY-MM-DD format
+        const itemDateStr = item[deadlineKey].split('T')[0]
+        return itemDateStr === dateStr
       })
       
       const totalMinutes = itemsForDate.reduce((sum, item) => {
