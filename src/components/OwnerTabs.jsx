@@ -34,12 +34,18 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   const ownerKey = findColumnKey('owner')
   
   console.log('Found column keys:', { ownerKey, deadlineKey, priorityKey, businessTypeKey, businessKey, statusKey })
+  console.log('Filter values:', { deadlineFrom, deadlineTo })
   
   // Get unique values for dropdowns
   const ownerData = data.filter(d => {
     const ownerValue = ownerKey ? d[ownerKey] : d.owner
     return ownerValue === active
   })
+  
+  console.log('Owner data for', active, ':', ownerData.length, 'rows')
+  if (ownerData.length > 0) {
+    console.log('Sample date value:', ownerData[0][deadlineKey])
+  }
   
   const priorities = useMemo(() => {
     return Array.from(new Set(ownerData.map(d => d[priorityKey] || '').filter(Boolean)))
@@ -55,8 +61,17 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   
   // Apply filters
   const filtered = ownerData.filter(item => {
-    if (deadlineKey && deadlineFrom && item[deadlineKey] < deadlineFrom) return false
-    if (deadlineKey && deadlineTo && item[deadlineKey] > deadlineTo) return false
+    // Date filtering - convert to Date objects for proper comparison
+    if (deadlineKey && deadlineFrom && item[deadlineKey]) {
+      const itemDate = new Date(item[deadlineKey])
+      const fromDate = new Date(deadlineFrom)
+      if (itemDate < fromDate) return false
+    }
+    if (deadlineKey && deadlineTo && item[deadlineKey]) {
+      const itemDate = new Date(item[deadlineKey])
+      const toDate = new Date(deadlineTo)
+      if (itemDate > toDate) return false
+    }
     if (priorityKey && priority && item[priorityKey] !== priority) return false
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
     if (businessKey && business && !(String(item[businessKey] || '').toLowerCase().includes(business.toLowerCase()))) return false
