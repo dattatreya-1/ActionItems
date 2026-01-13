@@ -21,13 +21,23 @@ export default function AdminView({ initialData = [], columns = [] }) {
     const found = cols.find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
     return found ? found.key : null
   }
+  
+  // Special handling for date column - prioritize exact "DATE" match
+  const findDateKey = () => {
+    const exactDate = cols.find(c => 
+      String(c.label || '').toUpperCase() === 'DATE' || 
+      String(c.key || '').toUpperCase() === 'DATE'
+    )
+    if (exactDate) return exactDate.key
+    return findColumnKey('deadline')
+  }
 
   const ownerKey = findColumnKey('owner')
   const businessTypeKey = findColumnKey('business type')
   const statusKey = findColumnKey('status')
-  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
+  const deadlineKey = findDateKey()
   const businessKey = findColumnKey('business')
-  const minKey = findColumnKey('min')
+  const minKey = findColumnKey('min') || findColumnKey('minutes')
 
   const owners = useMemo(() => {
     const set = new Set(initialData.map(d => d[ownerKey]).filter(Boolean))

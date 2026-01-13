@@ -26,7 +26,17 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
     return found ? found.key : null
   }
   
-  const deadlineKey = findColumnKey('deadline') || findColumnKey('date')
+  // Special handling for date column - prioritize exact "DATE" match
+  const findDateKey = () => {
+    const exactDate = columns.find(c => 
+      String(c.label || '').toUpperCase() === 'DATE' || 
+      String(c.key || '').toUpperCase() === 'DATE'
+    )
+    if (exactDate) return exactDate.key
+    return findColumnKey('deadline')
+  }
+  
+  const deadlineKey = findDateKey()
   const priorityKey = findColumnKey('priority')
   const businessTypeKey = findColumnKey('business type')
   const businessKey = findColumnKey('business')
