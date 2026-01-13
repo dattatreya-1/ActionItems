@@ -55,8 +55,17 @@ export default function AdminView({ initialData = [], columns = [] }) {
     if (businessKey && business && !(String(item[businessKey] || '').toLowerCase().includes(business.toLowerCase()))) return false
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
     if (statusKey && status && item[statusKey] !== status) return false
-    if (deadlineKey && from && item[deadlineKey] < from) return false
-    if (deadlineKey && to && item[deadlineKey] > to) return false
+    // Date filtering - convert to Date objects for proper comparison
+    if (deadlineKey && from && item[deadlineKey]) {
+      const itemDate = new Date(item[deadlineKey])
+      const fromDate = new Date(from)
+      if (itemDate < fromDate) return false
+    }
+    if (deadlineKey && to && item[deadlineKey]) {
+      const itemDate = new Date(item[deadlineKey])
+      const toDate = new Date(to)
+      if (itemDate > toDate) return false
+    }
     return true
   })
 
