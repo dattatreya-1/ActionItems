@@ -1,24 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React from 'react'
 
-export default function ReportsView({ data = [], columns = [] }) {
-  const [activeView, setActiveView] = useState('pivot')
-  
-  // Filters state
-  const [selectedOwner, setSelectedOwner] = useState('')
-  const [selectedBusiness, setSelectedBusiness] = useState('')
-  const [selectedBusinessType, setSelectedBusinessType] = useState('')
-  const [selectedProcess, setSelectedProcess] = useState('')
-  const [selectedProcessSubType, setSelectedProcessSubType] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  
-  // Helper to find column key
-  const findColumnKey = (name) => {
-    const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
-    const found = columns.find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
-    return found ? found.key : null
-  }
+// ReportsView removed — placeholder to avoid import errors while deploying
+export default function ReportsView() {
+  return null
+}
 
   // Find all column keys
   const ownerKey = findColumnKey('owner')
@@ -59,7 +44,104 @@ export default function ReportsView({ data = [], columns = [] }) {
   const processSubTypes = useMemo(() => Array.from(new Set(data.map(d => d[processSubTypeKey]).filter(Boolean))), [data, processSubTypeKey])
   const statuses = useMemo(() => Array.from(new Set(data.map(d => d[statusKey]).filter(Boolean))), [data, statusKey])
 
-  // Filter data based on all filters
+  // Helper function to normalize various date formats to YYYY-MM-DD
+  const normalizeDate = (val) => {
+    if (val === null || val === undefined || val === '') return null
+
+    // Handle Firebase-like timestamp objects { seconds, nanoseconds }
+    if (typeof val === 'object' && val.seconds) {
+      const dt = new Date(val.seconds * 1000)
+      const year = dt.getFullYear()
+      const month = String(dt.getMonth() + 1).padStart(2, '0')
+      const day = String(dt.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    // Handle numeric timestamps (seconds or milliseconds)
+    if (typeof val === 'number') {
+      const ts = val > 1e12 ? val : val * 1000
+      const dt = new Date(ts)
+      if (!isNaN(dt.getTime())) {
+        const year = dt.getFullYear()
+        const month = String(dt.getMonth() + 1).padStart(2, '0')
+        const day = String(dt.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+      }
+    }
+
+    let dateStr = String(val)
+    dateStr = dateStr.trim().replace(/\u00A0/g, '')
+
+    // If already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+
+    // Extract MM/DD/YYYY or MM-DD-YYYY anywhere in the string
+    const mdMatch = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/)
+    if (mdMatch) {
+      const [, month, day, year] = mdMatch
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+
+    // Try to parse as Date (fallback)
+    const parsed = new Date(dateStr)
+    if (!isNaN(parsed.getTime())) {
+      const year = parsed.getFullYear()
+      const month = String(parsed.getMonth() + 1).padStart(2, '0')
+      const day = String(parsed.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+
+    return null
+  }
+
+  // Try to obtain a date value from an item using the primary key or alternate keys
+  // Recursive search for any date-like value inside the item (handles nested objects)
+  const findDateInObject = (obj, depth = 0, seen = new Set()) => {
+    if (!obj || depth > 4 || seen.has(obj)) return null
+    if (typeof obj !== 'object') return null
+    seen.add(obj)
+
+    for (const [k, v] of Object.entries(obj)) {
+      if (v == null) continue
+
+      // direct match for timestamp-like objects
+      if (typeof v === 'object' && (v.seconds || v._seconds || v.nanoseconds || v._nanoseconds)) return v
+
+      // numeric timestamp
+      if (typeof v === 'number') {
+        // plausible unix timestamp range check
+        if (v > 1e9) return v
+      }
+
+      // string that looks like a date
+      if (typeof v === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v) || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(v) || !isNaN(Date.parse(v))) return v
+      }
+
+      // nested object - recurse
+      if (typeof v === 'object') {
+        const found = findDateInObject(v, depth + 1, seen)
+        if (found) return found
+      }
+    }
+
+    return null
+  }
+
+  const getItemDateValue = (item) => {
+    if (!item) return null
+    // Prefer the configured dateKey if it contains a usable value
+    if (dateKey && Object.prototype.hasOwnProperty.call(item, dateKey) && item[dateKey] != null) return item[dateKey]
+
+    // Fallback: look for any top-level date-like key with non-null value
+    const altKey = Object.keys(item).find(k => /date|created|createdat|created_at/i.test(k) && item[k] != null)
+    if (altKey) return item[altKey]
+
+    // Final fallback: recursively search for nested date-like values
+    return findDateInObject(item)
+  }
+
+  // Filter data based on all filters (date-range filter removed)
   const filteredData = useMemo(() => {
     return data.filter(item => {
       if (selectedOwner && item[ownerKey] !== selectedOwner) return false
@@ -68,17 +150,10 @@ export default function ReportsView({ data = [], columns = [] }) {
       if (selectedProcess && item[processKey] !== selectedProcess) return false
       if (selectedProcessSubType && item[processSubTypeKey] !== selectedProcessSubType) return false
       if (selectedStatus && item[statusKey] !== selectedStatus) return false
-      
-      if (dateFrom && item[dateKey]) {
-        if (item[dateKey] < dateFrom) return false
-      }
-      if (dateTo && item[dateKey]) {
-        if (item[dateKey] > dateTo) return false
-      }
-      
+
       return true
     })
-  }, [data, selectedOwner, selectedBusiness, selectedBusinessType, selectedProcess, selectedProcessSubType, selectedStatus, dateFrom, dateTo, ownerKey, businessKey, businessTypeKey, processKey, processSubTypeKey, statusKey, dateKey])
+  }, [data, selectedOwner, selectedBusiness, selectedBusinessType, selectedProcess, selectedProcessSubType, selectedStatus, ownerKey, businessKey, businessTypeKey, processKey, processSubTypeKey, statusKey])
 
   // Pivot table data
   const pivotData = useMemo(() => {
@@ -145,30 +220,33 @@ export default function ReportsView({ data = [], columns = [] }) {
     const dateMap = {}
     
     filteredData.forEach(item => {
-      const date = item[dateKey]
-      if (!date) {
-        console.log('Skipping item with no date:', item)
+      const rawVal = getItemDateValue(item)
+      const norm = normalizeDate(rawVal)
+      if (!norm) {
+        console.log('Skipping item with no date:', {
+          rawVal, type: typeof rawVal, rawString: typeof rawVal === 'string' ? rawVal : JSON.stringify(rawVal)
+        }, item)
         return
       }
-      
-      if (!dateMap[date]) {
-        dateMap[date] = {
-          date,
+
+      if (!dateMap[norm]) {
+        dateMap[norm] = {
+          date: norm,
           minutes: 0,
           items: 0,
           byOwner: {}
         }
       }
-      
+
       const mins = parseFloat(item[minKey]) || 0
-      dateMap[date].minutes += mins
-      dateMap[date].items += 1
-      
+      dateMap[norm].minutes += mins
+      dateMap[norm].items += 1
+
       const owner = item[ownerKey] || 'Unknown'
-      if (!dateMap[date].byOwner[owner]) {
-        dateMap[date].byOwner[owner] = 0
+      if (!dateMap[norm].byOwner[owner]) {
+        dateMap[norm].byOwner[owner] = 0
       }
-      dateMap[date].byOwner[owner] += mins
+      dateMap[norm].byOwner[owner] += mins
     })
     
     console.log('Date map:', dateMap)
@@ -259,25 +337,7 @@ export default function ReportsView({ data = [], columns = [] }) {
           </select>
         </div>
 
-        <div style={{ background: '#e0e7ff', padding: '1rem', borderRadius: '8px', border: '2px solid #6366f1' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#312e81' }}>From Date:</label>
-          <input 
-            type="date" 
-            value={dateFrom} 
-            onChange={e => setDateFrom(e.target.value)}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #6366f1' }}
-          />
-        </div>
-
-        <div style={{ background: '#fecaca', padding: '1rem', borderRadius: '8px', border: '2px solid #f87171' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold', color: '#7f1d1d' }}>To Date:</label>
-          <input 
-            type="date" 
-            value={dateTo} 
-            onChange={e => setDateTo(e.target.value)}
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #f87171' }}
-          />
-        </div>
+        
       </div>
 
       {/* View Tabs */}
