@@ -14,30 +14,46 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
       try {
         const { rows } = await fetchActionItems()
         
-        // Extract unique values for each field
-        const getUnique = (key) => {
-          const values = rows
-            .map(r => r[key])
-            .filter(v => v && String(v).trim && String(v).trim() !== '')
-          return [...new Set(values)].sort()
+        if (!rows || rows.length === 0) {
+          console.log('No rows available for dropdown options')
+          return
         }
         
         // Try to find the actual column keys used in the data
         const sampleRow = rows[0] || {}
         const keys = Object.keys(sampleRow)
         
+        console.log('Available row keys:', keys)
+        console.log('Sample row:', sampleRow)
+        
         const findKey = (variants) => {
           for (const variant of variants) {
-            if (keys.includes(variant)) return variant
+            if (keys.includes(variant)) {
+              console.log(`Found key match: ${variant}`)
+              return variant
+            }
           }
+          console.log(`No match found for variants:`, variants)
           return variants[0] // fallback
         }
         
         const businessKey = findKey(['business', 'Business', 'BUSINESS'])
-        const businessTypeKey = findKey(['businessType', 'business_type', 'BusinessType', 'BUSINESS_TYPE'])
+        const businessTypeKey = findKey(['businessType', 'business_type', 'BusinessType', 'BUSINESS_TYPE', 'BUSINESSTYPE'])
         const processKey = findKey(['process', 'Process', 'PROCESS'])
-        const subTypeKey = findKey(['subType', 'sub_type', 'SubType', 'SUB_TYPE'])
+        const subTypeKey = findKey(['subType', 'sub_type', 'SubType', 'SUB_TYPE', 'SUBTYPE', 'processSubType', 'process_sub_type'])
         const ownerKey = findKey(['owner', 'Owner', 'OWNER'])
+        
+        console.log('Selected keys:', { businessKey, businessTypeKey, processKey, subTypeKey, ownerKey })
+        
+        // Extract unique values for each field
+        const getUnique = (key) => {
+          const values = rows
+            .map(r => r[key])
+            .filter(v => v && String(v).trim && String(v).trim() !== '')
+          const unique = [...new Set(values)].sort()
+          console.log(`Unique values for ${key}:`, unique)
+          return unique
+        }
         
         setDropdownOptions({
           business: getUnique(businessKey),
