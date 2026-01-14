@@ -166,6 +166,38 @@ export default function ReportsView() {
     return { rowValues, colValues, grid }
   }, [filtered, pivotRowDim, pivotColDim])
 
+  // Build day-wise workload data
+  const dayWiseData = useMemo(() => {
+    const dayMap = {}
+    
+    filtered.forEach(row => {
+      const rawDate = row.createDate || row.date || row.Date || row.CreateDate
+      const d = parseDate(rawDate)
+      if (!d) return
+      
+      const dateKey = d.toISOString().split('T')[0]
+      
+      if (!dayMap[dateKey]) {
+        dayMap[dateKey] = {
+          date: dateKey,
+          displayDate: d.toLocaleDateString(),
+          count: 0,
+          minutes: 0
+        }
+      }
+      
+      dayMap[dateKey].count++
+      
+      // Extract duration if available (assuming minutes, duration, or time field)
+      const duration = row.duration || row.Duration || row.minutes || row.Minutes || row.time || row.Time || 0
+      dayMap[dateKey].minutes += parseFloat(duration) || 0
+    })
+    
+    const days = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date))
+    
+    return days
+  }, [filtered])
+
   return (
     <section style={{ padding: '1rem' }}>
       <h2>Reports</h2>
@@ -356,8 +388,128 @@ export default function ReportsView() {
       )}
 
       {activeView === 'daywise' && (
-        <div style={{ padding: '1rem', border: '1px solid #e5e7eb', borderRadius: 6 }}>
-          <p style={{ margin: 0 }}>Day-wise workload content goes here.</p>
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ width: 320, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12 }}>
+            <h3 style={{ marginTop: 0 }}>Filters</h3>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#60a5fa" label="Business" />
+              <select value={filterBusiness || ''} onChange={e => setFilterBusiness(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.business.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#fbbf24" label="Business Type" />
+              <select value={filterBusinessType || ''} onChange={e => setFilterBusinessType(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.businessType.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#34d399" label="Process" />
+              <select value={filterProcess || ''} onChange={e => setFilterProcess(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.process.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#a78bfa" label="Process Sub-type" />
+              <select value={filterSubType || ''} onChange={e => setFilterSubType(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.subType.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#fb7185" label="Status" />
+              <select value={filterStatus || ''} onChange={e => setFilterStatus(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.status.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#f97316" label="User" />
+              <select value={filterUser || ''} onChange={e => setFilterUser(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.user.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ marginBottom: 6 }}>Date From</div>
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
+              <div style={{ marginBottom: 6 }}>Date To</div>
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ width: '100%' }} />
+            </div>
+
+            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+              <button onClick={() => { setFilterBusiness(null); setFilterBusinessType(null); setFilterProcess(null); setFilterSubType(null); setFilterStatus(null); setFilterUser(null); setDateFrom(''); setDateTo('') }} style={{ padding: '6px 10px' }}>Reset</button>
+              <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 13 }}>{loading ? 'Loading...' : `${filtered.length} rows`}</div>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
+            <h3 style={{ marginTop: 0 }}>Day-wise Workload</h3>
+            <div style={{ overflow: 'auto', maxHeight: '600px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>Date</th>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Minutes</th>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Hours</th>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Days</th>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>No. of Deliveries</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dayWiseData.map(day => {
+                    const hours = day.minutes / 60
+                    const days = hours / 8
+                    return (
+                      <tr key={day.date}>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>{day.displayDate}</td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{day.minutes.toFixed(0)}</td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{hours.toFixed(2)}</td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{days.toFixed(2)}</td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{day.count}</td>
+                      </tr>
+                    )
+                  })}
+                  {dayWiseData.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                        No data available for the selected filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {dayWiseData.length > 0 && (
+                  <tfoot>
+                    <tr style={{ fontWeight: 700, background: '#f3f4f6' }}>
+                      <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>Total</td>
+                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                        {dayWiseData.reduce((sum, d) => sum + d.minutes, 0).toFixed(0)}
+                      </td>
+                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                        {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60).toFixed(2)}
+                      </td>
+                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                        {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60 / 8).toFixed(2)}
+                      </td>
+                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                        {dayWiseData.reduce((sum, d) => sum + d.count, 0)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </section>
