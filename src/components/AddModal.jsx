@@ -79,17 +79,39 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
     setLoading(true)
     
     // Filter out any id, row, or UNNAMED fields before sending
+    // Also filter out any fields that are empty, null, or undefined
     const cleanData = {}
     Object.keys(formData).forEach(key => {
-      if (key !== 'id' && 
-          key !== 'row' && 
-          key !== 'actions' &&
-          !key.toUpperCase().startsWith('UNNAMED')) {
-        cleanData[key] = formData[key]
+      const value = formData[key]
+      
+      // Skip system fields
+      if (key === 'id' || 
+          key === 'row' || 
+          key === 'actions' ||
+          key.toUpperCase().startsWith('UNNAMED')) {
+        console.log(`Skipping field: ${key}`)
+        return
       }
+      
+      // Skip empty values (but keep 0 and false)
+      if (value === '' || value === null || value === undefined) {
+        console.log(`Skipping empty field: ${key}`)
+        return
+      }
+      
+      // Only include if the column exists in the columns metadata
+      const columnExists = columns.find(c => c.key === key)
+      if (!columnExists) {
+        console.log(`Skipping non-existent column: ${key}`)
+        return
+      }
+      
+      cleanData[key] = value
     })
     
+    console.log('Form data before cleaning:', formData)
     console.log('Submitting clean data:', cleanData)
+    console.log('Clean data keys:', Object.keys(cleanData))
     
     try {
       const result = await onSave(cleanData)
