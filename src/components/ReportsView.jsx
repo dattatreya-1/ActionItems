@@ -82,12 +82,6 @@ export default function ReportsView() {
     return null
   }
 
-  // Find column key by label or key name (robust against casing/spacing)
-  const findColumnKey = (name) => {
-    const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
-    const found = (columns || []).find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
-    return found ? found.key : null
-  }
 
   function applyFilters(rows) {
     return rows.filter(r => {
