@@ -188,7 +188,8 @@ export default function ReportsView() {
       const d = parseDate(rawDate)
       if (!d) return
       
-      const dateKey = d.toISOString().split('T')[0]
+      // Normalize date to YYYY-MM-DD format to prevent duplicates
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       
       if (!dayMap[dateKey]) {
         dayMap[dateKey] = {
@@ -206,7 +207,8 @@ export default function ReportsView() {
       dayMap[dateKey].minutes += parseFloat(duration) || 0
     })
     
-    const days = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date))
+    // Sort from newest to oldest
+    const days = Object.values(dayMap).sort((a, b) => b.date.localeCompare(a.date))
     
     return days
   }, [filtered])
