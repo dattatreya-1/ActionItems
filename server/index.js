@@ -147,6 +147,12 @@ app.post('/api/action-items', async (req, res) => {
     // Only include fields that exist in the table schema and convert types
     const filteredData = {}
     Object.keys(data).forEach(key => {
+      // Skip UNNAMED columns from client
+      if (key.toUpperCase().startsWith('UNNAMED')) {
+        console.log(`Skipping UNNAMED field "${key}"`)
+        return
+      }
+      
       if (validColumns.includes(key)) {
         let value = data[key]
         const columnType = columnTypes[key]

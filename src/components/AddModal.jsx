@@ -25,9 +25,12 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
     }
   }
 
-  // Skip rendering fields for 'id' and 'actions'
+  // Skip rendering fields for 'id' and 'actions' and UNNAMED columns
   const editableColumns = columns.filter(col => 
-    col.key !== 'id' && col.key !== 'actions'
+    col.key !== 'id' && 
+    col.key !== 'actions' &&
+    !col.key.toUpperCase().startsWith('UNNAMED') &&
+    !col.label.toUpperCase().startsWith('UNNAMED')
   )
 
   // Helper to check if a field should be a date input

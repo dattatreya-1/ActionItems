@@ -3,7 +3,11 @@ import React, { useState } from 'react'
 export default function EditModal({ row, columns = [], onClose, onSave }) {
   const [form, setForm] = useState({ ...row })
 
-  const editableCols = columns.filter(c => c.key !== 'actions')
+  const editableCols = columns.filter(c => 
+    c.key !== 'actions' &&
+    !c.key.toUpperCase().startsWith('UNNAMED') &&
+    !c.label.toUpperCase().startsWith('UNNAMED')
+  )
 
   // Helper to check if a field should be a date input
   const isDateField = (col) => {
