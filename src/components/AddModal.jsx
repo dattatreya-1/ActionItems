@@ -1,11 +1,41 @@
-import React, { useState } from 'react'
-import { createActionItem } from '../services/dataService'
+import React, { useState, useEffect } from 'react'
+import { createActionItem, fetchActionItems } from '../services/dataService'
 
 export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
   const [formData, setFormData] = useState({
     owner: defaultOwner || ''
   })
   const [loading, setLoading] = useState(false)
+  const [dropdownOptions, setDropdownOptions] = useState({})
+
+  // Fetch existing data to populate dropdown options
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        const { rows } = await fetchActionItems()
+        
+        // Extract unique values for each field
+        const getUnique = (key) => {
+          const values = rows
+            .map(r => r[key])
+            .filter(v => v && v.trim && v.trim() !== '')
+          return [...new Set(values)].sort()
+        }
+        
+        setDropdownOptions({
+          business: getUnique('business'),
+          businessType: getUnique('businessType'),
+          process: getUnique('process'),
+          subType: getUnique('subType'),
+          owner: getUnique('owner')
+        })
+      } catch (err) {
+        console.error('Failed to load dropdown options:', err)
+      }
+    }
+    
+    loadOptions()
+  }, [])
 
   const handleChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }))
@@ -67,17 +97,56 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
             {editableColumns.map(col => (
               <div key={col.key} className="form-group">
                 <label>{col.label}</label>
-                {col.key === 'owner' ? (
+                {col.key === 'business' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Business</option>
+                    {(dropdownOptions.business || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : col.key === 'businessType' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Business Type</option>
+                    {(dropdownOptions.businessType || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : col.key === 'process' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Process</option>
+                    {(dropdownOptions.process || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : col.key === 'subType' ? (
+                  <select
+                    value={formData[col.key] || ''}
+                    onChange={e => handleChange(col.key, e.target.value)}
+                  >
+                    <option value="">Select Process Sub-type</option>
+                    {(dropdownOptions.subType || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : col.key === 'owner' ? (
                   <select
                     value={formData[col.key] || ''}
                     onChange={e => handleChange(col.key, e.target.value)}
                     required
                   >
                     <option value="">Select Owner</option>
-                    <option value="Florence">Florence</option>
-                    <option value="Dan">Dan</option>
-                    <option value="Kams">Kams</option>
-                    <option value="Sunny">Sunny</option>
+                    {(dropdownOptions.owner || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
                   </select>
                 ) : isDateField(col) ? (
                   <input
@@ -91,6 +160,7 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
                     onChange={e => handleChange(col.key, e.target.value)}
                   >
                     <option value="">Select Status</option>
+                    <option value="Not Started">Not Started</option>
                     <option value="Open">Open</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
@@ -120,6 +190,10 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
                     value={formData[col.key] || ''}
                     onChange={e => handleChange(col.key, e.target.value)}
                     placeholder={`Enter ${col.label.toLowerCase()}`}
+                  />
+                )}
+              </div>
+            ))}
                   />
                 )}
               </div>
