@@ -88,6 +88,111 @@ export default function AdminView({ initialData = [], columns = [] }) {
     return va > vb ? -1 : 1
   })
 
+  const formatCell = (v) => {
+    if (v === null || v === undefined) return ''
+    if (typeof v === 'object') return v.value ?? JSON.stringify(v)
+    return v
+  }
+
+  const renderFilters = () => (
+    <div className="filters">
+      <label>
+        Owner:
+        <select value={owner} onChange={e => setOwner(e.target.value)}>
+          <option value="">(any)</option>
+          {owners.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      </label>
+
+      <label>
+        Business Type:
+        <select value={businessType} onChange={e => setBusinessType(e.target.value)}>
+          <option value="">(any)</option>
+          {businessTypes.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+      </label>
+
+      <label>
+        Status:
+        <select value={status} onChange={e => setStatus(e.target.value)}>
+          <option value="">(any)</option>
+          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </label>
+
+      <label>
+        Business:
+        <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" />
+      </label>
+
+      <label>
+        From (deadline):
+        <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
+      </label>
+
+      <label>
+        To (deadline):
+        <input type="date" value={to} onChange={e => setTo(e.target.value)} />
+      </label>
+    </div>
+  )
+
+  const renderAdminTable = () => (
+    <div className="admin-table table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {cols.map(c => (
+              <th key={c.key} onClick={() => {
+                if (sortKey === c.key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                else { setSortKey(c.key); setSortDir('asc') }
+              }}>{c.label} {sortKey === c.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {(sortKey ? sorted : filtered).map(r => (
+            <tr key={r.id}>
+              {cols.map(c => (
+                <td key={c.key}>
+                  {c.key === 'actions' ? (
+                    <div style={{display:'flex',gap:8}}>
+                      <button title="Delete" className="action-btn delete" onClick={async () => {
+                        const uniqueId = r.id
+                        if (!confirm(`Delete item ${uniqueId}?`)) return
+                        try {
+                          await (await import('../services/dataService')).deleteActionItem(uniqueId)
+                          window.location.reload()
+                        } catch (err) { alert('Delete failed: '+err) }
+                      }}>🗑</button>
+                      <button title="Edit" className="action-btn" onClick={() => setEditingRow(r)}>Edit</button>
+                    </div>
+                  ) : (
+                    formatCell(r[c.key])
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="admin-count">Showing {filtered.length} of {initialData.length}</div>
+      <div className="totals-summary" style={{marginTop: '1rem', padding: '1rem', background: '#f0f9ff', borderRadius: '8px', display: 'flex', gap: '2rem', flexWrap: 'wrap'}}>
+        <div>
+          <strong>Total Deliverables:</strong> {filtered.length}
+        </div>
+        <div>
+          <strong>Total Minutes:</strong> {filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0).toFixed(0)}
+        </div>
+        <div>
+          <strong>Total Hours:</strong> {(filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0) / 60).toFixed(2)}
+        </div>
+        <div>
+          <strong>Total Days (÷6):</strong> {(filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0) / 60 / 6).toFixed(2)}
+        </div>
+      </div>
+    </div>
+  )
   return (
     <section className="admin">
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
@@ -115,107 +220,8 @@ export default function AdminView({ initialData = [], columns = [] }) {
         )}
       </div>
 
-      {activeTab === 'data' && (
-      <div className="filters">
-        <label>
-          Owner:
-          <select value={owner} onChange={e => setOwner(e.target.value)}>
-            <option value="">(any)</option>
-            {owners.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </label>
-
-        <label>
-          Business Type:
-          <select value={businessType} onChange={e => setBusinessType(e.target.value)}>
-            <option value="">(any)</option>
-            {businessTypes.map(b => <option key={b} value={b}>{b}</option>)}
-          </select>
-        </label>
-
-        <label>
-          Status:
-          <select value={status} onChange={e => setStatus(e.target.value)}>
-            <option value="">(any)</option>
-            {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </label>
-
-        <label>
-          Business:
-          <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" />
-        </label>
-
-        <label>
-          From (deadline):
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
-        </label>
-
-        <label>
-          To (deadline):
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} />
-        </label>
-      </div>
-      
-      <div className="admin-table table-wrap">
-        <table>
-          <thead>
-            <tr>
-              {cols.map(c => (
-                <th key={c.key} onClick={() => {
-                  if (sortKey === c.key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
-                  else { setSortKey(c.key); setSortDir('asc') }
-                }}>{c.label} {sortKey === c.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {(sortKey ? sorted : filtered).map(r => (
-              <tr key={r.id}>
-                {cols.map(c => (
-                  <td key={c.key}>
-                    {c.key === 'actions' ? (
-                      <div style={{display:'flex',gap:8}}>
-                        <button title="Delete" className="action-btn delete" onClick={async () => {
-                          const uniqueId = r.id
-                          if (!confirm(`Delete item ${uniqueId}?`)) return
-                          try {
-                            await (await import('../services/dataService')).deleteActionItem(uniqueId)
-                            window.location.reload()
-                          } catch (err) { alert('Delete failed: '+err) }
-                        }}>🗑</button>
-                        <button title="Edit" className="action-btn" onClick={() => setEditingRow(r)}>Edit</button>
-                      </div>
-                    ) : (
-                      (function formatCell(v) {
-                        if (v === null || v === undefined) return ''
-                        if (typeof v === 'object') return v.value ?? JSON.stringify(v)
-                        return v
-                      })(r[c.key])
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="admin-count">Showing {filtered.length} of {initialData.length}</div>
-        <div className="totals-summary" style={{marginTop: '1rem', padding: '1rem', background: '#f0f9ff', borderRadius: '8px', display: 'flex', gap: '2rem', flexWrap: 'wrap'}}>
-          <div>
-            <strong>Total Deliverables:</strong> {filtered.length}
-          </div>
-          <div>
-            <strong>Total Minutes:</strong> {filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0).toFixed(0)}
-          </div>
-          <div>
-            <strong>Total Hours:</strong> {(filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0) / 60).toFixed(2)}
-          </div>
-          <div>
-            <strong>Total Days (÷6):</strong> {(filtered.reduce((sum, row) => sum + (parseFloat(row[minKey]) || 0), 0) / 60 / 6).toFixed(2)}
-          </div>
-        </div>
-      </div>
-        )}
+      {activeTab === 'data' && renderFilters()}
+      {activeTab === 'data' && renderAdminTable()}
 
         {activeTab === 'reports' && (
           <div style={{ marginTop: '1rem' }}>
