@@ -102,13 +102,24 @@ export default function ReportsView() {
 
   function parseDate(v) {
     if (!v) return null
+    
+    // Try YYYY-MM-DD format (e.g., 2026-01-13)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const d = new Date(v + 'T00:00:00')
+      if (!isNaN(d)) return d
+    }
+    
+    // Try standard Date parsing
     const d = new Date(v)
     if (!isNaN(d)) return d
+    
+    // Try M/D/YYYY or MM/DD/YYYY format
     const parts = String(v).split('/')
     if (parts.length === 3) {
       const [m, day, y] = parts.map(p => parseInt(p, 10))
       if (!isNaN(m) && !isNaN(day) && !isNaN(y)) return new Date(y, m - 1, day)
     }
+    
     return null
   }
 
