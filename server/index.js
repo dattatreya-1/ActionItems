@@ -6,6 +6,7 @@ import { Storage } from '@google-cloud/storage'
 import multer from 'multer'
 import path from 'path'
 import process from 'process'
+import crypto from 'crypto'
 
 const app = express()
 app.use(cors())
@@ -191,20 +192,12 @@ app.post('/api/action-items', async (req, res) => {
       }
     })
     
-    // Generate sequential ID if the table has an id column
+    // Generate UUID for id column if it exists
     let generatedId = null
     if (validColumns.includes('id')) {
-      // Get the current maximum ID number
-      const maxIdQuery = `SELECT MAX(CAST(\`id\` AS INT64)) as max_id FROM \`${project}.${dataset}.${table}\``
-      const [maxIdJob] = await bq.createQueryJob({ query: maxIdQuery })
-      const [maxIdResult] = await maxIdJob.getQueryResults()
-      
-      const currentMaxId = maxIdResult.length > 0 && maxIdResult[0].max_id !== null ? maxIdResult[0].max_id : 0
-      const nextIdNumber = currentMaxId + 1
-      
-      // Pad with zeros to make it 3 digits (001, 002, 003, etc.)
-      generatedId = String(nextIdNumber).padStart(3, '0')
-      console.log('Current max id:', currentMaxId, 'Next id:', generatedId)
+      // Generate a UUID to match existing data format
+      generatedId = crypto.randomUUID()
+      console.log('Generated UUID for id:', generatedId)
       filteredData.id = generatedId
     }
     
