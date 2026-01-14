@@ -99,13 +99,6 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
         return
       }
       
-      // Only include if the column exists in the columns metadata
-      const columnExists = columns.find(c => c.key === key)
-      if (!columnExists) {
-        console.log(`Skipping non-existent column: ${key}`)
-        return
-      }
-      
       cleanData[key] = value
     })
     
