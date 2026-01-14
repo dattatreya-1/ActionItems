@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react'
 import { getColumns, createActionItem } from '../services/dataService'
 import EditModal from './EditModal'
 import AddModal from './AddModal'
+import ReportsView from './ReportsView'
 
 export default function AdminView({ initialData = [], columns = [] }) {
   const [activeTab, setActiveTab] = useState('data')
@@ -94,11 +95,18 @@ export default function AdminView({ initialData = [], columns = [] }) {
           <h2>Admin</h2>
           <div style={{display: 'flex', gap: '0.5rem'}}>
             <button 
-              className={'tab-active'}
+              className={activeTab === 'data' ? 'tab-active' : ''}
               onClick={() => setActiveTab('data')}
-              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: '#2b6cb0', color: 'white'}}
+              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'data' ? '#2b6cb0' : 'white', color: activeTab === 'data' ? 'white' : '#333'}}
             >
               Data
+            </button>
+            <button 
+              className={activeTab === 'reports' ? 'tab-active' : ''}
+              onClick={() => setActiveTab('reports')}
+              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'reports' ? '#2b6cb0' : 'white', color: activeTab === 'reports' ? 'white' : '#333'}}
+            >
+              Reports
             </button>
           </div>
         </div>
@@ -107,6 +115,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
         )}
       </div>
 
+      {activeTab === 'data' && (
       <div className="filters">
         <label>
           Owner:
@@ -147,7 +156,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
           <input type="date" value={to} onChange={e => setTo(e.target.value)} />
         </label>
       </div>
-
+      
       <div className="admin-table table-wrap">
         <table>
           <thead>
@@ -206,7 +215,13 @@ export default function AdminView({ initialData = [], columns = [] }) {
           </div>
         </div>
       </div>
-      
+        )}
+
+        {activeTab === 'reports' && (
+          <div style={{ marginTop: '1rem' }}>
+            <ReportsView />
+          </div>
+        )}
       {editingRow && (
         <EditModal row={editingRow} columns={cols} onClose={() => setEditingRow(null)} onSave={async (updated) => {
           try {
