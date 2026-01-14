@@ -12,36 +12,36 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const { rows } = await fetchActionItems()
+        const { rows, columns } = await fetchActionItems()
         
         if (!rows || rows.length === 0) {
           console.log('No rows available for dropdown options')
           return
         }
         
-        // Try to find the actual column keys used in the data
-        const sampleRow = rows[0] || {}
-        const keys = Object.keys(sampleRow)
+        console.log('Columns metadata:', columns)
         
-        console.log('Available row keys:', keys)
-        console.log('Sample row:', sampleRow)
-        
-        const findKey = (variants) => {
-          for (const variant of variants) {
-            if (keys.includes(variant)) {
-              console.log(`Found key match: ${variant}`)
-              return variant
+        // Find column keys by checking column labels
+        const findColumnKey = (labelVariants) => {
+          for (const variant of labelVariants) {
+            const col = columns.find(c => 
+              (c.label || '').toLowerCase().includes(variant.toLowerCase()) ||
+              (c.key || '').toLowerCase().includes(variant.toLowerCase())
+            )
+            if (col) {
+              console.log(`Found column for "${variant}":`, col.key)
+              return col.key
             }
           }
-          console.log(`No match found for variants:`, variants)
-          return variants[0] // fallback
+          console.log(`No column found for variants:`, labelVariants)
+          return labelVariants[0]
         }
         
-        const businessKey = findKey(['business', 'Business', 'BUSINESS'])
-        const businessTypeKey = findKey(['businessType', 'business_type', 'BusinessType', 'BUSINESS_TYPE', 'BUSINESSTYPE'])
-        const processKey = findKey(['process', 'Process', 'PROCESS'])
-        const subTypeKey = findKey(['subType', 'sub_type', 'SubType', 'SUB_TYPE', 'SUBTYPE', 'processSubType', 'process_sub_type'])
-        const ownerKey = findKey(['owner', 'Owner', 'OWNER'])
+        const businessKey = findColumnKey(['business'])
+        const businessTypeKey = findColumnKey(['business type', 'businesstype', 'business_type'])
+        const processKey = findColumnKey(['process'])
+        const subTypeKey = findColumnKey(['sub-type', 'subtype', 'sub type', 'process subtype'])
+        const ownerKey = findColumnKey(['owner'])
         
         console.log('Selected keys:', { businessKey, businessTypeKey, processKey, subTypeKey, ownerKey })
         
