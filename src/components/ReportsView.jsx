@@ -49,7 +49,9 @@ export default function ReportsView() {
           const subTypeKey = cols.find(c => /sub.*type|subtype/i.test(c.label || c.key))?.key
           const statusKey = cols.find(c => /status/i.test(c.label || c.key))?.key
           const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
-          const dateKey = cols.find(c => /create.*date|^date$/i.test(c.label || c.key))?.key
+          // Use "Date" column specifically, not "Create Date"
+          const dateKey = cols.find(c => (c.label === 'DATE' || c.key === 'Date'))?.key || 
+                          cols.find(c => /^date$/i.test(c.label || c.key))?.key
           const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
 
           return {
@@ -60,7 +62,7 @@ export default function ReportsView() {
             subType: row[subTypeKey] || row.subType || row.sub_type || row.SubType || '',
             status: row[statusKey] || row.status || row.Status || '',
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
-            createDate: row[dateKey] || row.createDate || row.CreateDate || row.date || row.Date || row['Create Date'] || '',
+            createDate: row[dateKey] || row.Date || row.date || '',
             minutes: row[minutesKey] || row.minutes || row.Minutes || row.duration || row.Duration || 0
           }
         })

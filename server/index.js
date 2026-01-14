@@ -106,8 +106,8 @@ app.get('/api/action-items', async (req, res) => {
 
     const columns = fields.map(f => ({ key: f.name, label: String(f.name).toUpperCase() }))
 
-    // Query rows (limit to 1000 for safety)
-    const query = `SELECT * FROM \`${project}.${dataset}.${table}\` LIMIT 1000`
+    // Query rows (limit to 10000 for larger datasets)
+    const query = `SELECT * FROM \`${project}.${dataset}.${table}\` ORDER BY row DESC LIMIT 10000`
     const [job] = await bq.createQueryJob({ query })
     const [rows] = await job.getQueryResults()
 
