@@ -14,8 +14,22 @@ export default function AddModal({ columns, defaultOwner, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    
+    // Filter out any id, row, or UNNAMED fields before sending
+    const cleanData = {}
+    Object.keys(formData).forEach(key => {
+      if (key !== 'id' && 
+          key !== 'row' && 
+          key !== 'actions' &&
+          !key.toUpperCase().startsWith('UNNAMED')) {
+        cleanData[key] = formData[key]
+      }
+    })
+    
+    console.log('Submitting clean data:', cleanData)
+    
     try {
-      const result = await onSave(formData)
+      const result = await onSave(cleanData)
       console.log('Create result:', result)
     } catch (err) {
       console.error('Create error:', err)
