@@ -144,8 +144,8 @@ export default function ReportsView() {
 
   // Build pivot table data structure
   const pivotData = useMemo(() => {
-    const rowValues = uniq(filtered.map(r => r[pivotRowDim]))
-    const colValues = uniq(filtered.map(r => r[pivotColDim]))
+    const rowValues = uniq(filtered.map(r => r[pivotRowDim])).filter(v => v && v.trim && v.trim() !== '')
+    const colValues = uniq(filtered.map(r => r[pivotColDim])).filter(v => v && v.trim && v.trim() !== '')
     
     const grid = {}
     rowValues.forEach(rv => {
@@ -158,7 +158,7 @@ export default function ReportsView() {
     filtered.forEach(row => {
       const rv = row[pivotRowDim]
       const cv = row[pivotColDim]
-      if (rv && cv && grid[rv] && grid[rv][cv] !== undefined) {
+      if (rv && rv.trim && rv.trim() !== '' && cv && cv.trim && cv.trim() !== '' && grid[rv] && grid[rv][cv] !== undefined) {
         grid[rv][cv]++
       }
     })
