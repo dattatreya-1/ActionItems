@@ -107,8 +107,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
         )}
       </div>
 
-      <>
-        <div className="filters">
+      <div className="filters">
         <label>
           Owner:
           <select value={owner} onChange={e => setOwner(e.target.value)}>
