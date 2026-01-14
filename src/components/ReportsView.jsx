@@ -50,11 +50,17 @@ export default function ReportsView() {
   }, [])
 
   const choices = useMemo(() => {
-    const b = uniq(rows.map(r => r.business))
-    const bt = uniq(rows.map(r => r.businessType))
-    const p = uniq(rows.map(r => r.process))
-    const st = uniq(rows.map(r => r.subType))
-    const s = uniq(rows.map(r => r.status))
+    const businessKey = findColumnKey('business')
+    const businessTypeKey = findColumnKey('business type')
+    const processKey = findColumnKey('process')
+    const subTypeKey = findColumnKey('subtype') || findColumnKey('sub-type') || findColumnKey('sub type')
+    const statusKey = findColumnKey('status')
+
+    const b = uniq(rows.map(r => r[businessKey] ?? r.business ?? r.Business))
+    const bt = uniq(rows.map(r => r[businessTypeKey] ?? r.businessType ?? r.business_type ?? r.BusinessType))
+    const p = uniq(rows.map(r => r[processKey] ?? r.process ?? r.Process))
+    const st = uniq(rows.map(r => r[subTypeKey] ?? r.subType ?? r.sub_type ?? r.SubType))
+    const s = uniq(rows.map(r => r[statusKey] ?? r.status ?? r.Status))
     return { business: b, businessType: bt, process: p, subType: st, status: s }
   }, [rows])
 
@@ -68,6 +74,13 @@ export default function ReportsView() {
       if (!isNaN(m) && !isNaN(day) && !isNaN(y)) return new Date(y, m - 1, day)
     }
     return null
+  }
+
+  // Find column key by label or key name (robust against casing/spacing)
+  const findColumnKey = (name) => {
+    const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+    const found = (columns || []).find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
+    return found ? found.key : null
   }
 
   function applyFilters(rows) {
