@@ -25,6 +25,7 @@ export default function ReportsView() {
   const [filterProcess, setFilterProcess] = useState(null)
   const [filterSubType, setFilterSubType] = useState(null)
   const [filterStatus, setFilterStatus] = useState(null)
+  const [filterUser, setFilterUser] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
@@ -47,6 +48,7 @@ export default function ReportsView() {
           const processKey = cols.find(c => /process/i.test(c.label || c.key) && !/sub/i.test(c.label || c.key))?.key
           const subTypeKey = cols.find(c => /sub.*type|subtype/i.test(c.label || c.key))?.key
           const statusKey = cols.find(c => /status/i.test(c.label || c.key))?.key
+          const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
           const dateKey = cols.find(c => /create.*date|date/i.test(c.label || c.key))?.key
 
           return {
@@ -56,6 +58,7 @@ export default function ReportsView() {
             process: row[processKey] || row.process || row.Process || '',
             subType: row[subTypeKey] || row.subType || row.sub_type || row.SubType || '',
             status: row[statusKey] || row.status || row.Status || '',
+            user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
             createDate: row[dateKey] || row.createDate || row.CreateDate || row.date || row.Date || ''
           }
         })
@@ -91,7 +94,8 @@ export default function ReportsView() {
     const p = uniq(rows.map(r => r[processKey] ?? r.process ?? r.Process))
     const st = uniq(rows.map(r => r[subTypeKey] ?? r.subType ?? r.sub_type ?? r.SubType))
     const s = uniq(rows.map(r => r[statusKey] ?? r.status ?? r.Status))
-    return { business: b, businessType: bt, process: p, subType: st, status: s }
+    const u = uniq(rows.map(r => r.user))
+    return { business: b, businessType: bt, process: p, subType: st, status: s, user: u }
   }, [rows, columns])
 
   function parseDate(v) {
@@ -114,6 +118,7 @@ export default function ReportsView() {
       if (filterProcess && r.process !== filterProcess) return false
       if (filterSubType && r.subType !== filterSubType) return false
       if (filterStatus && r.status !== filterStatus) return false
+      if (filterUser && r.user !== filterUser) return false
 
       if (dateFrom || dateTo) {
         const d = parseDate(r.createDate || r.CreateDate || r.date || r.Date)
@@ -135,7 +140,7 @@ export default function ReportsView() {
     })
   }
 
-  const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, dateFrom, dateTo])
+  const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, filterUser, dateFrom, dateTo])
 
   // Build pivot table data structure
   const pivotData = useMemo(() => {
@@ -208,6 +213,7 @@ export default function ReportsView() {
                 <option value="process">Process</option>
                 <option value="subType">Process Sub-type</option>
                 <option value="status">Status</option>
+                <option value="user">User</option>
               </select>
             </div>
 
@@ -219,6 +225,7 @@ export default function ReportsView() {
                 <option value="process">Process</option>
                 <option value="subType">Process Sub-type</option>
                 <option value="status">Status</option>
+                <option value="user">User</option>
               </select>
             </div>
 
@@ -266,6 +273,14 @@ export default function ReportsView() {
               </select>
             </div>
 
+            <div style={{ marginBottom: 8 }}>
+              <ColorBox color="#f97316" label="User" />
+              <select value={filterUser || ''} onChange={e => setFilterUser(e.target.value || null)} style={{ width: '100%' }}>
+                <option value="">(All)</option>
+                {choices.user.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+
             <div style={{ marginTop: 12 }}>
               <div style={{ marginBottom: 6 }}>Date From</div>
               <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
@@ -274,7 +289,7 @@ export default function ReportsView() {
             </div>
 
             <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button onClick={() => { setFilterBusiness(null); setFilterBusinessType(null); setFilterProcess(null); setFilterSubType(null); setFilterStatus(null); setDateFrom(''); setDateTo('') }} style={{ padding: '6px 10px' }}>Reset</button>
+              <button onClick={() => { setFilterBusiness(null); setFilterBusinessType(null); setFilterProcess(null); setFilterSubType(null); setFilterStatus(null); setFilterUser(null); setDateFrom(''); setDateTo('') }} style={{ padding: '6px 10px' }}>Reset</button>
               <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 13 }}>{loading ? 'Loading...' : `${filtered.length} rows`}</div>
             </div>
           </div>
