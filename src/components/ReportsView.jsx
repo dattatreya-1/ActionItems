@@ -144,8 +144,21 @@ export default function ReportsView() {
 
   // Build pivot table data structure
   const pivotData = useMemo(() => {
-    const rowValues = uniq(filtered.map(r => r[pivotRowDim])).filter(v => v && v.trim && v.trim() !== '')
-    const colValues = uniq(filtered.map(r => r[pivotColDim])).filter(v => v && v.trim && v.trim() !== '')
+    // Helper to normalize values (trim, capitalize first letter of each word for consistency)
+    const normalizeValue = (val) => {
+      if (!val || !val.trim || val.trim() === '') return null
+      return val.trim()
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    }
+    
+    const rowValuesRaw = filtered.map(r => normalizeValue(r[pivotRowDim])).filter(v => v !== null)
+    const colValuesRaw = filtered.map(r => normalizeValue(r[pivotColDim])).filter(v => v !== null)
+    
+    const rowValues = uniq(rowValuesRaw)
+    const colValues = uniq(colValuesRaw)
     
     const grid = {}
     rowValues.forEach(rv => {
@@ -156,9 +169,9 @@ export default function ReportsView() {
     })
     
     filtered.forEach(row => {
-      const rv = row[pivotRowDim]
-      const cv = row[pivotColDim]
-      if (rv && rv.trim && rv.trim() !== '' && cv && cv.trim && cv.trim() !== '' && grid[rv] && grid[rv][cv] !== undefined) {
+      const rv = normalizeValue(row[pivotRowDim])
+      const cv = normalizeValue(row[pivotColDim])
+      if (rv && cv && grid[rv] && grid[rv][cv] !== undefined) {
         grid[rv][cv]++
       }
     })
