@@ -469,7 +469,7 @@ export default function ReportsView() {
                 <tbody>
                   {dayWiseData.map(day => {
                     const hours = day.minutes / 60
-                    const days = hours / 8
+                    const days = hours / 6
                     return (
                       <tr key={day.date}>
                         <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>{day.displayDate}</td>
@@ -499,7 +499,7 @@ export default function ReportsView() {
                         {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60).toFixed(2)}
                       </td>
                       <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
-                        {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60 / 8).toFixed(2)}
+                        {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60 / 6).toFixed(2)}
                       </td>
                       <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
                         {dayWiseData.reduce((sum, d) => sum + d.count, 0)}
