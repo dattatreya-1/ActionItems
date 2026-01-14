@@ -28,6 +28,9 @@ export default function ReportsView() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
+  const [pivotRowDim, setPivotRowDim] = useState('business')
+  const [pivotColDim, setPivotColDim] = useState('status')
+
   useEffect(() => {
     let mounted = true
     setLoading(true)
@@ -36,7 +39,28 @@ export default function ReportsView() {
         const r = Array.isArray(res.rows) ? res.rows : (res.rows || [])
         const cols = res.columns || getColumns()
         if (!mounted) return
-        setRows(r)
+        
+        // Normalize rows: map backend column keys to standard property names
+        const normalized = r.map(row => {
+          const businessKey = cols.find(c => /business/i.test(c.label || c.key) && !/type/i.test(c.label || c.key))?.key
+          const businessTypeKey = cols.find(c => /business.*type/i.test(c.label || c.key))?.key
+          const processKey = cols.find(c => /process/i.test(c.label || c.key) && !/sub/i.test(c.label || c.key))?.key
+          const subTypeKey = cols.find(c => /sub.*type|subtype/i.test(c.label || c.key))?.key
+          const statusKey = cols.find(c => /status/i.test(c.label || c.key))?.key
+          const dateKey = cols.find(c => /create.*date|date/i.test(c.label || c.key))?.key
+
+          return {
+            ...row,
+            business: row[businessKey] || row.business || row.Business || '',
+            businessType: row[businessTypeKey] || row.businessType || row.business_type || row.BusinessType || '',
+            process: row[processKey] || row.process || row.Process || '',
+            subType: row[subTypeKey] || row.subType || row.sub_type || row.SubType || '',
+            status: row[statusKey] || row.status || row.Status || '',
+            createDate: row[dateKey] || row.createDate || row.CreateDate || row.date || row.Date || ''
+          }
+        })
+        
+        setRows(normalized)
         setColumns(cols)
       })
       .catch(err => {
@@ -113,6 +137,30 @@ export default function ReportsView() {
 
   const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, dateFrom, dateTo])
 
+  // Build pivot table data structure
+  const pivotData = useMemo(() => {
+    const rowValues = uniq(filtered.map(r => r[pivotRowDim]))
+    const colValues = uniq(filtered.map(r => r[pivotColDim]))
+    
+    const grid = {}
+    rowValues.forEach(rv => {
+      grid[rv] = {}
+      colValues.forEach(cv => {
+        grid[rv][cv] = 0
+      })
+    })
+    
+    filtered.forEach(row => {
+      const rv = row[pivotRowDim]
+      const cv = row[pivotColDim]
+      if (rv && cv && grid[rv] && grid[rv][cv] !== undefined) {
+        grid[rv][cv]++
+      }
+    })
+    
+    return { rowValues, colValues, grid }
+  }, [filtered, pivotRowDim, pivotColDim])
+
   return (
     <section style={{ padding: '1rem' }}>
       <h2>Reports</h2>
@@ -150,6 +198,32 @@ export default function ReportsView() {
       {activeView === 'pivot' && (
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ width: 320, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12 }}>
+            <h3 style={{ marginTop: 0 }}>Pivot Configuration</h3>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 6, fontWeight: 600 }}>Row Dimension</div>
+              <select value={pivotRowDim} onChange={e => setPivotRowDim(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: 4 }}>
+                <option value="business">Business</option>
+                <option value="businessType">Business Type</option>
+                <option value="process">Process</option>
+                <option value="subType">Process Sub-type</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 6, fontWeight: 600 }}>Column Dimension</div>
+              <select value={pivotColDim} onChange={e => setPivotColDim(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: 4 }}>
+                <option value="business">Business</option>
+                <option value="businessType">Business Type</option>
+                <option value="process">Process</option>
+                <option value="subType">Process Sub-type</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
+
+            <hr style={{ margin: '16px 0', border: 0, borderTop: '1px solid #e5e7eb' }} />
+
             <h3 style={{ marginTop: 0 }}>Filters</h3>
 
             <div style={{ marginBottom: 8 }}>
@@ -205,13 +279,62 @@ export default function ReportsView() {
             </div>
           </div>
 
-          <div style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Pivot (preview)</h3>
-            <div style={{ fontSize: 13 }}>
-              {filtered.slice(0, 50).map(r => (
-                <div key={r.id || JSON.stringify(r)} style={{ padding: '6px 0', borderBottom: '1px solid #f3f4f6' }}>{r.business} — {r.process} — {r.subType} — {r.status} — {r.createDate}</div>
-              ))}
-              {filtered.length === 0 && <div>No rows match the filters.</div>}
+          <div style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
+            <h3 style={{ marginTop: 0 }}>Pivot Table</h3>
+            <div style={{ overflow: 'auto', maxHeight: '600px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>
+                      {pivotRowDim}
+                    </th>
+                    {pivotData.colValues.map(cv => (
+                      <th key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2 }}>
+                        {cv || '(empty)'}
+                      </th>
+                    ))}
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f3f4f6', fontWeight: 700, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2 }}>
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pivotData.rowValues.map(rv => {
+                    const rowTotal = pivotData.colValues.reduce((sum, cv) => sum + (pivotData.grid[rv][cv] || 0), 0)
+                    return (
+                      <tr key={rv}>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600, background: '#fafafa' }}>
+                          {rv || '(empty)'}
+                        </td>
+                        {pivotData.colValues.map(cv => (
+                          <td key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>
+                            {pivotData.grid[rv][cv] || 0}
+                          </td>
+                        ))}
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f9fafb' }}>
+                          {rowTotal}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  <tr>
+                    <td style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 700, background: '#f3f4f6' }}>
+                      Total
+                    </td>
+                    {pivotData.colValues.map(cv => {
+                      const colTotal = pivotData.rowValues.reduce((sum, rv) => sum + (pivotData.grid[rv][cv] || 0), 0)
+                      return (
+                        <td key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f3f4f6' }}>
+                          {colTotal}
+                        </td>
+                      )
+                    })}
+                    <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#e5e7eb' }}>
+                      {filtered.length}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
