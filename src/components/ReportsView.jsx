@@ -49,7 +49,8 @@ export default function ReportsView() {
           const subTypeKey = cols.find(c => /sub.*type|subtype/i.test(c.label || c.key))?.key
           const statusKey = cols.find(c => /status/i.test(c.label || c.key))?.key
           const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
-          const dateKey = cols.find(c => /create.*date|date/i.test(c.label || c.key))?.key
+          const dateKey = cols.find(c => /create.*date|^date$/i.test(c.label || c.key))?.key
+          const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
 
           return {
             ...row,
@@ -59,7 +60,8 @@ export default function ReportsView() {
             subType: row[subTypeKey] || row.subType || row.sub_type || row.SubType || '',
             status: row[statusKey] || row.status || row.Status || '',
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
-            createDate: row[dateKey] || row.createDate || row.CreateDate || row.date || row.Date || ''
+            createDate: row[dateKey] || row.createDate || row.CreateDate || row.date || row.Date || row['Create Date'] || '',
+            minutes: row[minutesKey] || row.minutes || row.Minutes || row.duration || row.Duration || 0
           }
         })
         
@@ -204,8 +206,8 @@ export default function ReportsView() {
       
       dayMap[dateKey].count++
       
-      // Extract duration if available (assuming minutes, duration, or time field)
-      const duration = row.duration || row.Duration || row.minutes || row.Minutes || row.time || row.Time || 0
+      // Extract duration - use normalized minutes field
+      const duration = row.minutes || 0
       dayMap[dateKey].minutes += parseFloat(duration) || 0
     })
     
