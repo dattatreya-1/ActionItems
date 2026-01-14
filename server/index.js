@@ -166,6 +166,15 @@ app.post('/api/action-items', async (req, res) => {
         if (value === '' || value === undefined) {
           value = null
         }
+        // Convert date format from YYYY-MM-DD to M/D/YYYY for consistency
+        else if (columnType === 'STRING' && (key.toLowerCase().includes('date') || key === 'Date')) {
+          // Check if value is in YYYY-MM-DD format
+          if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            const [year, month, day] = value.split('-')
+            value = `${parseInt(month)}/${parseInt(day)}/${year}`
+            console.log(`  Converted date from YYYY-MM-DD to M/D/YYYY: "${data[key]}" -> "${value}"`)
+          }
+        }
         // Convert to integer for INT64 columns
         else if (columnType === 'INT64' || columnType === 'INTEGER') {
           console.log(`  Converting "${value}" to INT64`)
