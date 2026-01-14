@@ -48,6 +48,12 @@ export default function ReportsView() {
       .finally(() => mounted && setLoading(false))
     return () => { mounted = false }
   }, [])
+  // Find column key by label or key name (robust against casing/spacing)
+  function findColumnKey(name) {
+    const norm = String(name || '').replace(/[^a-z0-9]/gi, '').toLowerCase()
+    const found = (columns || []).find(c => String(c.label || c.key || '').replace(/[^a-z0-9]/gi, '').toLowerCase().includes(norm))
+    return found ? found.key : null
+  }
 
   const choices = useMemo(() => {
     const businessKey = findColumnKey('business')
@@ -62,7 +68,7 @@ export default function ReportsView() {
     const st = uniq(rows.map(r => r[subTypeKey] ?? r.subType ?? r.sub_type ?? r.SubType))
     const s = uniq(rows.map(r => r[statusKey] ?? r.status ?? r.Status))
     return { business: b, businessType: bt, process: p, subType: st, status: s }
-  }, [rows])
+  }, [rows, columns])
 
   function parseDate(v) {
     if (!v) return null
