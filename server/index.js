@@ -122,7 +122,9 @@ app.get('/api/action-items', async (req, res) => {
 app.post('/api/action-items', async (req, res) => {
   try {
     const data = req.body || {}
+    console.log('=== CREATE ACTION ITEM ===')
     console.log('Received POST data:', JSON.stringify(data, null, 2))
+    console.log('Data keys:', Object.keys(data))
     
     const keys = Object.keys(data)
     if (keys.length === 0) return res.status(400).json({ error: 'no fields provided' })
@@ -142,7 +144,7 @@ app.post('/api/action-items', async (req, res) => {
     })
     
     console.log('Available table columns:', validColumns)
-    console.log('Column types:', columnTypes)
+    console.log('Column types:', JSON.stringify(columnTypes, null, 2))
     
     // Only include fields that exist in the table schema and convert types
     const filteredData = {}
@@ -157,22 +159,33 @@ app.post('/api/action-items', async (req, res) => {
         let value = data[key]
         const columnType = columnTypes[key]
         
+        console.log(`Processing field "${key}": value="${value}", type="${columnType}"`)
+        
         // Convert empty strings to null
         if (value === '' || value === undefined) {
           value = null
         }
         // Convert to integer for INT64 columns
         else if (columnType === 'INT64' || columnType === 'INTEGER') {
+          console.log(`  Converting "${value}" to INT64`)
           value = value !== null ? parseInt(value, 10) : null
-          if (isNaN(value)) value = null
+          if (isNaN(value)) {
+            console.log(`  WARNING: Could not convert "${data[key]}" to INT64 for field "${key}"`)
+            value = null
+          }
         }
         // Convert to float for FLOAT64 columns
         else if (columnType === 'FLOAT64' || columnType === 'FLOAT') {
+          console.log(`  Converting "${value}" to FLOAT64`)
           value = value !== null ? parseFloat(value) : null
-          if (isNaN(value)) value = null
+          if (isNaN(value)) {
+            console.log(`  WARNING: Could not convert "${data[key]}" to FLOAT64 for field "${key}"`)
+            value = null
+          }
         }
         
         filteredData[key] = value
+        console.log(`  Final value for "${key}": ${value}`)
       } else {
         console.log(`Skipping field "${key}" - not in table schema`)
       }
@@ -213,6 +226,8 @@ app.post('/api/action-items', async (req, res) => {
     if (allKeys.length === 0) {
       return res.status(400).json({ error: 'No valid fields to insert' })
     }
+    
+    console.log('Filtered data to insert:', JSON.stringify(filteredData, null, 2))
     
     // Build INSERT query
     const columns = allKeys.map(k => `\`${k}\``).join(', ')
