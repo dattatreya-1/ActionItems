@@ -192,9 +192,11 @@ export default function ReportsView() {
       const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       
       if (!dayMap[dateKey]) {
+        // Format as MM/DD/YYYY for consistent display
+        const displayDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`
         dayMap[dateKey] = {
           date: dateKey,
-          displayDate: d.toLocaleDateString(),
+          displayDate: displayDate,
           count: 0,
           minutes: 0
         }
