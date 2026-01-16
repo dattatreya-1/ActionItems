@@ -16,6 +16,8 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   const [priority, setPriority] = useState('')
   const [businessType, setBusinessType] = useState('')
   const [business, setBusiness] = useState('')
+  const [process, setProcess] = useState('')
+  const [subType, setSubType] = useState('')
   const [status, setStatus] = useState('')
   
   const columns = columnsProp && columnsProp.length ? columnsProp : getColumns()
@@ -41,6 +43,8 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   const priorityKey = findColumnKey('priority')
   const businessTypeKey = findColumnKey('business type')
   const businessKey = findColumnKey('business')
+  const processKey = findColumnKey('process')
+  const subTypeKey = findColumnKey('subtype') || findColumnKey('sub-type') || findColumnKey('sub type')
   const statusKey = findColumnKey('status')
   const ownerKey = findColumnKey('owner')
   
@@ -66,6 +70,18 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
     return Array.from(new Set(ownerData.map(d => d[businessTypeKey] || '').filter(Boolean)))
   }, [ownerData, businessTypeKey])
   
+  const businesses = useMemo(() => {
+    return Array.from(new Set(ownerData.map(d => d[businessKey] || '').filter(Boolean)))
+  }, [ownerData, businessKey])
+  
+  const processes = useMemo(() => {
+    return Array.from(new Set(ownerData.map(d => d[processKey] || '').filter(Boolean)))
+  }, [ownerData, processKey])
+  
+  const subTypes = useMemo(() => {
+    return Array.from(new Set(ownerData.map(d => d[subTypeKey] || '').filter(Boolean)))
+  }, [ownerData, subTypeKey])
+  
   const statuses = useMemo(() => {
     return Array.from(new Set(ownerData.map(d => d[statusKey] || '').filter(Boolean)))
   }, [ownerData, statusKey])
@@ -85,7 +101,9 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
     }
     if (priorityKey && priority && item[priorityKey] !== priority) return false
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
-    if (businessKey && business && !(String(item[businessKey] || '').toLowerCase().includes(business.toLowerCase()))) return false
+    if (businessKey && business && item[businessKey] !== business) return false
+    if (processKey && process && item[processKey] !== process) return false
+    if (subTypeKey && subType && item[subTypeKey] !== subType) return false
     if (statusKey && status && item[statusKey] !== status) return false
     return true
   })
@@ -226,12 +244,32 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
             </div>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
-                Deadline From:
-                <input type="date" value={deadlineFrom} onChange={e => setDeadlineFrom(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+                Business Type:
+                <select value={businessType} onChange={e => setBusinessType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {businessTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
+                </select>
               </label>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
-                Deadline To:
-                <input type="date" value={deadlineTo} onChange={e => setDeadlineTo(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+                Business:
+                <select value={business} onChange={e => setBusiness(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {businesses.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Process:
+                <select value={process} onChange={e => setProcess(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {processes.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Process Sub Type:
+                <select value={subType} onChange={e => setSubType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {subTypes.map(st => <option key={st} value={st}>{st}</option>)}
+                </select>
               </label>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
                 Priority:
@@ -241,22 +279,19 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                 </select>
               </label>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
-                Business Type:
-                <select value={businessType} onChange={e => setBusinessType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
-                  <option value="">(any)</option>
-                  {businessTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
-                </select>
-              </label>
-              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px', gridColumn: '1 / -1'}}>
-                Business:
-                <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
-              </label>
-              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
                 Status:
                 <select value={status} onChange={e => setStatus(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
                   <option value="">(any)</option>
                   {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Deadline From:
+                <input type="date" value={deadlineFrom} onChange={e => setDeadlineFrom(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Deadline To:
+                <input type="date" value={deadlineTo} onChange={e => setDeadlineTo(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
               </label>
             </div>
             <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
@@ -266,6 +301,8 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                 setPriority('')
                 setBusinessType('')
                 setBusiness('')
+                setProcess('')
+                setSubType('')
                 setStatus('')
               }} style={{padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Clear All</button>
               <button onClick={() => setShowFilterModal(false)} style={{padding: '8px 16px', background: '#2b6cb0', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Apply</button>

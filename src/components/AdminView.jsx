@@ -12,6 +12,11 @@ export default function AdminView({ initialData = [], columns = [] }) {
   const [to, setTo] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showFilterModal, setShowFilterModal] = useState(false)
+  const [businessType, setBusinessType] = useState('')
+  const [process, setProcess] = useState('')
+  const [subType, setSubType] = useState('')
+  const [priority, setPriority] = useState('')
+  const [status, setStatus] = useState('')
 
   // Use columns provided by parent (from API) if present, otherwise fall back to defaults
   const cols = (columns && columns.length) ? columns : getColumns()
@@ -38,6 +43,9 @@ export default function AdminView({ initialData = [], columns = [] }) {
   const statusKey = findColumnKey('status')
   const deadlineKey = findDateKey()
   const businessKey = findColumnKey('business')
+  const processKey = findColumnKey('process')
+  const subTypeKey = findColumnKey('subtype') || findColumnKey('sub-type') || findColumnKey('sub type')
+  const priorityKey = findColumnKey('priority')
   const minKey = findColumnKey('min') || findColumnKey('minutes')
 
   const owners = useMemo(() => {
@@ -50,12 +58,25 @@ export default function AdminView({ initialData = [], columns = [] }) {
   const [editingRow, setEditingRow] = useState(null)
   const [columnsProp, setColumnsProp] = useState(cols)
 
-  const [businessType, setBusinessType] = useState('')
-  const [status, setStatus] = useState('')
-
   const businessTypes = useMemo(() => {
     return Array.from(new Set(initialData.map(d => d[businessTypeKey] || '').filter(Boolean)))
   }, [initialData, businessTypeKey])
+
+  const businesses = useMemo(() => {
+    return Array.from(new Set(initialData.map(d => d[businessKey] || '').filter(Boolean)))
+  }, [initialData, businessKey])
+
+  const processes = useMemo(() => {
+    return Array.from(new Set(initialData.map(d => d[processKey] || '').filter(Boolean)))
+  }, [initialData, processKey])
+
+  const subTypes = useMemo(() => {
+    return Array.from(new Set(initialData.map(d => d[subTypeKey] || '').filter(Boolean)))
+  }, [initialData, subTypeKey])
+
+  const priorities = useMemo(() => {
+    return Array.from(new Set(initialData.map(d => d[priorityKey] || '').filter(Boolean)))
+  }, [initialData, priorityKey])
 
   const statuses = useMemo(() => {
     return Array.from(new Set(initialData.map(d => d[statusKey] || '').filter(Boolean)))
@@ -63,8 +84,11 @@ export default function AdminView({ initialData = [], columns = [] }) {
 
   const filtered = initialData.filter(item => {
     if (ownerKey && owner && item[ownerKey] !== owner) return false
-    if (businessKey && business && !(String(item[businessKey] || '').toLowerCase().includes(business.toLowerCase()))) return false
+    if (businessKey && business && item[businessKey] !== business) return false
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
+    if (processKey && process && item[processKey] !== process) return false
+    if (subTypeKey && subType && item[subTypeKey] !== subType) return false
+    if (priorityKey && priority && item[priorityKey] !== priority) return false
     if (statusKey && status && item[statusKey] !== status) return false
     // Date filtering - convert to Date objects for proper comparison
     if (deadlineKey && from && item[deadlineKey]) {
@@ -281,15 +305,39 @@ export default function AdminView({ initialData = [], columns = [] }) {
                 </select>
               </label>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Business:
+                <select value={business} onChange={e => setBusiness(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {businesses.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Process:
+                <select value={process} onChange={e => setProcess(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {processes.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Process Sub Type:
+                <select value={subType} onChange={e => setSubType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {subTypes.map(st => <option key={st} value={st}>{st}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Priority:
+                <select value={priority} onChange={e => setPriority(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {priorities.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
                 Status:
                 <select value={status} onChange={e => setStatus(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
                   <option value="">(any)</option>
                   {statuses.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
-              </label>
-              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px', gridColumn: '1 / -1'}}>
-                Business:
-                <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
               </label>
               <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
                 From (deadline):
@@ -304,8 +352,11 @@ export default function AdminView({ initialData = [], columns = [] }) {
               <button onClick={() => {
                 setOwner('')
                 setBusinessType('')
-                setStatus('')
                 setBusiness('')
+                setProcess('')
+                setSubType('')
+                setPriority('')
+                setStatus('')
                 setFrom('')
                 setTo('')
               }} style={{padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Clear All</button>
