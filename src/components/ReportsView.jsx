@@ -19,6 +19,7 @@ export default function ReportsView() {
   const [rows, setRows] = useState([])
   const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
 
   const [filterBusiness, setFilterBusiness] = useState(null)
   const [filterBusinessType, setFilterBusinessType] = useState(null)
@@ -297,13 +298,21 @@ export default function ReportsView() {
       </div>
 
       {activeView === 'pivot' && (
-        <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ width: 320, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Pivot Configuration</h3>
-
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ marginBottom: 6, fontWeight: 600 }}>Row Dimension</div>
-              <select value={pivotRowDim} onChange={e => setPivotRowDim(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: 4 }}>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Pivot Table</h3>
+            <button 
+              style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
+              onClick={() => setShowFilterModal(true)}
+            >
+              🔍 Filters
+            </button>
+          </div>
+          
+          <div style={{ marginBottom: '1rem', display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div>
+              <label style={{ marginRight: '8px', fontWeight: 600 }}>Row:</label>
+              <select value={pivotRowDim} onChange={e => setPivotRowDim(e.target.value)} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db' }}>
                 <option value="business">Business</option>
                 <option value="businessType">Business Type</option>
                 <option value="process">Process</option>
@@ -312,10 +321,9 @@ export default function ReportsView() {
                 <option value="user">User</option>
               </select>
             </div>
-
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ marginBottom: 6, fontWeight: 600 }}>Column Dimension</div>
-              <select value={pivotColDim} onChange={e => setPivotColDim(e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: 4 }}>
+            <div>
+              <label style={{ marginRight: '8px', fontWeight: 600 }}>Column:</label>
+              <select value={pivotColDim} onChange={e => setPivotColDim(e.target.value)} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db' }}>
                 <option value="business">Business</option>
                 <option value="businessType">Business Type</option>
                 <option value="process">Process</option>
@@ -324,74 +332,12 @@ export default function ReportsView() {
                 <option value="user">User</option>
               </select>
             </div>
-
-            <hr style={{ margin: '16px 0', border: 0, borderTop: '1px solid #e5e7eb' }} />
-
-            <h3 style={{ marginTop: 0 }}>Filters</h3>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#60a5fa" label="Business" />
-              <select value={filterBusiness || ''} onChange={e => setFilterBusiness(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.business.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#fbbf24" label="Business Type" />
-              <select value={filterBusinessType || ''} onChange={e => setFilterBusinessType(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.businessType.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#34d399" label="Process" />
-              <select value={filterProcess || ''} onChange={e => setFilterProcess(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.process.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#a78bfa" label="Process Sub-type" />
-              <select value={filterSubType || ''} onChange={e => setFilterSubType(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.subType.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#fb7185" label="Status" />
-              <select value={filterStatus || ''} onChange={e => setFilterStatus(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.status.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#f97316" label="User" />
-              <select value={filterUser || ''} onChange={e => setFilterUser(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.user.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginTop: 12 }}>
-              <div style={{ marginBottom: 6 }}>Date From</div>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
-              <div style={{ marginBottom: 6 }}>Date To</div>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ width: '100%' }} />
-            </div>
-
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button onClick={() => { setFilterBusiness(null); setFilterBusinessType(null); setFilterProcess(null); setFilterSubType(null); setFilterStatus(null); setFilterUser(null); setDateFrom(''); setDateTo('') }} style={{ padding: '6px 10px' }}>Reset</button>
-              <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 13 }}>{loading ? 'Loading...' : `${filtered.length} rows`}</div>
+            <div style={{ marginLeft: 'auto', fontSize: 14, color: '#6b7280' }}>
+              {loading ? 'Loading...' : `${filtered.length} rows`}
             </div>
           </div>
-
-          <div style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
-            <h3 style={{ marginTop: 0 }}>Pivot Table</h3>
+          
+          <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
             <div style={{ overflow: 'auto', maxHeight: '600px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
@@ -452,73 +398,21 @@ export default function ReportsView() {
       )}
 
       {activeView === 'daywise' && (
-        <div style={{ display: 'flex', gap: 16 }}>
-          <div style={{ width: 320, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12 }}>
-            <h3 style={{ marginTop: 0 }}>Filters</h3>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#60a5fa" label="Business" />
-              <select value={filterBusiness || ''} onChange={e => setFilterBusiness(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.business.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#fbbf24" label="Business Type" />
-              <select value={filterBusinessType || ''} onChange={e => setFilterBusinessType(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.businessType.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#34d399" label="Process" />
-              <select value={filterProcess || ''} onChange={e => setFilterProcess(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.process.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#a78bfa" label="Process Sub-type" />
-              <select value={filterSubType || ''} onChange={e => setFilterSubType(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.subType.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#fb7185" label="Status" />
-              <select value={filterStatus || ''} onChange={e => setFilterStatus(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.status.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <ColorBox color="#f97316" label="User" />
-              <select value={filterUser || ''} onChange={e => setFilterUser(e.target.value || null)} style={{ width: '100%' }}>
-                <option value="">(All)</option>
-                {choices.user.map(b => <option key={b} value={b}>{b}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginTop: 12 }}>
-              <div style={{ marginBottom: 6 }}>Date From</div>
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: '100%', marginBottom: 8 }} />
-              <div style={{ marginBottom: 6 }}>Date To</div>
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ width: '100%' }} />
-            </div>
-
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <button onClick={() => { setFilterBusiness(null); setFilterBusinessType(null); setFilterProcess(null); setFilterSubType(null); setFilterStatus(null); setFilterUser(null); setDateFrom(''); setDateTo('') }} style={{ padding: '6px 10px' }}>Reset</button>
-              <div style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: 13 }}>{loading ? 'Loading...' : `${filtered.length} rows`}</div>
-            </div>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Day-wise Workload</h3>
+            <button 
+              style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
+              onClick={() => setShowFilterModal(true)}
+            >
+              🔍 Filters
+            </button>
           </div>
-
-          <div style={{ flex: 1, border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
-            <h3 style={{ marginTop: 0 }}>Day-wise Workload</h3>
+          <div style={{ marginBottom: '1rem', fontSize: 14, color: '#6b7280' }}>
+            {loading ? 'Loading...' : `${filtered.length} rows`}
+          </div>
+          
+          <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
             <div style={{ overflow: 'auto', maxHeight: '600px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
@@ -572,6 +466,103 @@ export default function ReportsView() {
                   </tfoot>
                 )}
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowFilterModal(false)}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', width: '90%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Filters</h2>
+              <button onClick={() => setShowFilterModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6b7280' }}>×</button>
+            </div>
+
+            <div style={{ display: 'grid', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Business</label>
+                <select value={filterBusiness || ''} onChange={e => setFilterBusiness(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.business.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Business Type</label>
+                <select value={filterBusinessType || ''} onChange={e => setFilterBusinessType(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.businessType.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Process</label>
+                <select value={filterProcess || ''} onChange={e => setFilterProcess(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.process.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Process Sub-type</label>
+                <select value={filterSubType || ''} onChange={e => setFilterSubType(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.subType.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Status</label>
+                <select value={filterStatus || ''} onChange={e => setFilterStatus(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.status.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>User</label>
+                <select value={filterUser || ''} onChange={e => setFilterUser(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.user.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Date From</label>
+                  <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Date To</label>
+                  <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => { 
+                  setFilterBusiness(null); 
+                  setFilterBusinessType(null); 
+                  setFilterProcess(null); 
+                  setFilterSubType(null); 
+                  setFilterStatus(null); 
+                  setFilterUser(null); 
+                  setDateFrom(''); 
+                  setDateTo('') 
+                }} 
+                style={{ padding: '10px 20px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+              >
+                Clear All
+              </button>
+              <button 
+                onClick={() => setShowFilterModal(false)} 
+                style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', background: '#000', color: '#fff', cursor: 'pointer', fontWeight: '600', fontSize: '14px' }}
+              >
+                Apply
+              </button>
             </div>
           </div>
         </div>
