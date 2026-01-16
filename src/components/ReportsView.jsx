@@ -310,9 +310,22 @@ export default function ReportsView() {
           </div>
           
           <div style={{ marginBottom: '1rem', display: 'flex', gap: '16px', alignItems: 'center' }}>
-            <div>
-              <label style={{ marginRight: '8px', fontWeight: 600 }}>Row:</label>
-              <select value={pivotRowDim} onChange={e => setPivotRowDim(e.target.value)} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db' }}>
+            <div style={{ 
+              border: '2px solid #000', 
+              borderRadius: '10px', 
+              padding: '12px 16px', 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+              <label style={{ marginRight: '8px', fontWeight: 700, color: '#fff', fontSize: '14px' }}>Row:</label>
+              <select value={pivotRowDim} onChange={e => setPivotRowDim(e.target.value)} style={{ 
+                padding: '8px 12px', 
+                borderRadius: 6, 
+                border: '2px solid #000', 
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}>
                 <option value="business">Business</option>
                 <option value="businessType">Business Type</option>
                 <option value="process">Process</option>
@@ -321,9 +334,22 @@ export default function ReportsView() {
                 <option value="user">User</option>
               </select>
             </div>
-            <div>
-              <label style={{ marginRight: '8px', fontWeight: 600 }}>Column:</label>
-              <select value={pivotColDim} onChange={e => setPivotColDim(e.target.value)} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid #d1d5db' }}>
+            <div style={{ 
+              border: '2px solid #000', 
+              borderRadius: '10px', 
+              padding: '12px 16px', 
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            }}>
+              <label style={{ marginRight: '8px', fontWeight: 700, color: '#fff', fontSize: '14px' }}>Column:</label>
+              <select value={pivotColDim} onChange={e => setPivotColDim(e.target.value)} style={{ 
+                padding: '8px 12px', 
+                borderRadius: 6, 
+                border: '2px solid #000', 
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}>
                 <option value="business">Business</option>
                 <option value="businessType">Business Type</option>
                 <option value="process">Process</option>
