@@ -33,6 +33,10 @@ export default function ReportsView() {
   const [pivotRowDim, setPivotRowDim] = useState('business')
   const [pivotColDim, setPivotColDim] = useState('status')
 
+  // Drill-down state for day-wise workload
+  const [drillDownLevel, setDrillDownLevel] = useState('date') // date -> businessType -> business -> process -> subType -> deliverable
+  const [drillDownFilters, setDrillDownFilters] = useState({})
+
   useEffect(() => {
     let mounted = true
     setLoading(true)
@@ -195,39 +199,74 @@ export default function ReportsView() {
 
   // Build day-wise workload data
   const dayWiseData = useMemo(() => {
-    const dayMap = {}
+    const dataMap = {}
     
-    filtered.forEach(row => {
-      const rawDate = row.createDate || row.date || row.Date || row.CreateDate
-      const d = parseDate(rawDate)
-      if (!d) return
+    // Apply drill-down filters
+    let filteredData = filtered.filter(row => {
+      if (drillDownFilters.date) {
+        const rawDate = row.createDate || row.date || row.Date || row.CreateDate
+        const d = parseDate(rawDate)
+        if (!d) return false
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        if (dateKey !== drillDownFilters.date) return false
+      }
+      if (drillDownFilters.businessType && row.businessType !== drillDownFilters.businessType) return false
+      if (drillDownFilters.business && row.business !== drillDownFilters.business) return false
+      if (drillDownFilters.process && row.process !== drillDownFilters.process) return false
+      if (drillDownFilters.subType && row.subType !== drillDownFilters.subType) return false
+      return true
+    })
+    
+    filteredData.forEach(row => {
+      let key, displayValue
       
-      // Normalize date to YYYY-MM-DD format to prevent duplicates
-      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (drillDownLevel === 'date') {
+        const rawDate = row.createDate || row.date || row.Date || row.CreateDate
+        const d = parseDate(rawDate)
+        if (!d) return
+        key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        displayValue = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`
+      } else if (drillDownLevel === 'businessType') {
+        key = row.businessType || '(Unknown)'
+        displayValue = key
+      } else if (drillDownLevel === 'business') {
+        key = row.business || '(Unknown)'
+        displayValue = key
+      } else if (drillDownLevel === 'process') {
+        key = row.process || '(Unknown)'
+        displayValue = key
+      } else if (drillDownLevel === 'subType') {
+        key = row.subType || '(Unknown)'
+        displayValue = key
+      } else if (drillDownLevel === 'deliverable') {
+        key = row.deliverable || '(Unknown)'
+        displayValue = key
+      }
       
-      if (!dayMap[dateKey]) {
-        // Format as MM/DD/YYYY for consistent display
-        const displayDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`
-        dayMap[dateKey] = {
-          date: dateKey,
-          displayDate: displayDate,
+      if (!dataMap[key]) {
+        dataMap[key] = {
+          key: key,
+          displayValue: displayValue,
           count: 0,
           minutes: 0
         }
       }
       
-      dayMap[dateKey].count++
-      
-      // Extract duration - use normalized minutes field
+      dataMap[key].count++
       const duration = row.minutes || 0
-      dayMap[dateKey].minutes += parseFloat(duration) || 0
+      dataMap[key].minutes += parseFloat(duration) || 0
     })
     
-    // Sort from newest to oldest
-    const days = Object.values(dayMap).sort((a, b) => b.date.localeCompare(a.date))
+    // Sort appropriately
+    const data = Object.values(dataMap)
+    if (drillDownLevel === 'date') {
+      data.sort((a, b) => b.key.localeCompare(a.key)) // newest to oldest
+    } else {
+      data.sort((a, b) => a.displayValue.localeCompare(b.displayValue)) // alphabetical
+    }
     
-    return days
-  }, [filtered])
+    return data
+  }, [filtered, drillDownLevel, drillDownFilters])
 
   return (
     <section style={{ padding: '1rem' }}>
@@ -426,7 +465,138 @@ export default function ReportsView() {
       {activeView === 'daywise' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0 }}>Day-wise Workload</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h3 style={{ margin: 0 }}>Day-wise Workload</h3>
+              {/* Breadcrumb navigation */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', color: '#6b7280' }}>
+                <button 
+                  onClick={() => { setDrillDownLevel('date'); setDrillDownFilters({}) }}
+                  style={{ 
+                    background: drillDownLevel === 'date' ? '#3b82f6' : '#e5e7eb', 
+                    color: drillDownLevel === 'date' ? '#fff' : '#374151',
+                    border: 'none', 
+                    padding: '6px 12px', 
+                    borderRadius: '4px', 
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: drillDownLevel === 'date' ? '600' : '400'
+                  }}
+                >
+                  Date
+                </button>
+                {drillDownFilters.date && (
+                  <>
+                    <span>→</span>
+                    <button 
+                      onClick={() => { 
+                        setDrillDownLevel('businessType'); 
+                        setDrillDownFilters({ date: drillDownFilters.date }) 
+                      }}
+                      style={{ 
+                        background: drillDownLevel === 'businessType' ? '#3b82f6' : '#e5e7eb', 
+                        color: drillDownLevel === 'businessType' ? '#fff' : '#374151',
+                        border: 'none', 
+                        padding: '6px 12px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: drillDownLevel === 'businessType' ? '600' : '400'
+                      }}
+                    >
+                      Business Type
+                    </button>
+                  </>
+                )}
+                {drillDownFilters.businessType && (
+                  <>
+                    <span>→</span>
+                    <button 
+                      onClick={() => { 
+                        setDrillDownLevel('business'); 
+                        setDrillDownFilters({ date: drillDownFilters.date, businessType: drillDownFilters.businessType }) 
+                      }}
+                      style={{ 
+                        background: drillDownLevel === 'business' ? '#3b82f6' : '#e5e7eb', 
+                        color: drillDownLevel === 'business' ? '#fff' : '#374151',
+                        border: 'none', 
+                        padding: '6px 12px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: drillDownLevel === 'business' ? '600' : '400'
+                      }}
+                    >
+                      Business
+                    </button>
+                  </>
+                )}
+                {drillDownFilters.business && (
+                  <>
+                    <span>→</span>
+                    <button 
+                      onClick={() => { 
+                        setDrillDownLevel('process'); 
+                        setDrillDownFilters({ date: drillDownFilters.date, businessType: drillDownFilters.businessType, business: drillDownFilters.business }) 
+                      }}
+                      style={{ 
+                        background: drillDownLevel === 'process' ? '#3b82f6' : '#e5e7eb', 
+                        color: drillDownLevel === 'process' ? '#fff' : '#374151',
+                        border: 'none', 
+                        padding: '6px 12px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: drillDownLevel === 'process' ? '600' : '400'
+                      }}
+                    >
+                      Process
+                    </button>
+                  </>
+                )}
+                {drillDownFilters.process && (
+                  <>
+                    <span>→</span>
+                    <button 
+                      onClick={() => { 
+                        setDrillDownLevel('subType'); 
+                        setDrillDownFilters({ date: drillDownFilters.date, businessType: drillDownFilters.businessType, business: drillDownFilters.business, process: drillDownFilters.process }) 
+                      }}
+                      style={{ 
+                        background: drillDownLevel === 'subType' ? '#3b82f6' : '#e5e7eb', 
+                        color: drillDownLevel === 'subType' ? '#fff' : '#374151',
+                        border: 'none', 
+                        padding: '6px 12px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: drillDownLevel === 'subType' ? '600' : '400'
+                      }}
+                    >
+                      Process Sub Type
+                    </button>
+                  </>
+                )}
+                {drillDownFilters.subType && (
+                  <>
+                    <span>→</span>
+                    <button 
+                      style={{ 
+                        background: drillDownLevel === 'deliverable' ? '#3b82f6' : '#e5e7eb', 
+                        color: drillDownLevel === 'deliverable' ? '#fff' : '#374151',
+                        border: 'none', 
+                        padding: '6px 12px', 
+                        borderRadius: '4px', 
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: drillDownLevel === 'deliverable' ? '600' : '400'
+                      }}
+                    >
+                      Deliverable
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             <button 
               style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
               onClick={() => setShowFilterModal(true)}
@@ -443,7 +613,14 @@ export default function ReportsView() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>Date</th>
+                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>
+                      {drillDownLevel === 'date' && 'Date'}
+                      {drillDownLevel === 'businessType' && 'Business Type'}
+                      {drillDownLevel === 'business' && 'Business'}
+                      {drillDownLevel === 'process' && 'Process'}
+                      {drillDownLevel === 'subType' && 'Process Sub Type'}
+                      {drillDownLevel === 'deliverable' && 'Deliverable'}
+                    </th>
                     <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Minutes</th>
                     <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Hours</th>
                     <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Days</th>
@@ -451,16 +628,53 @@ export default function ReportsView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dayWiseData.map(day => {
-                    const hours = day.minutes / 60
+                  {dayWiseData.map(item => {
+                    const hours = item.minutes / 60
                     const days = hours / 6
+                    const canDrillDown = drillDownLevel !== 'deliverable'
+                    
                     return (
-                      <tr key={day.date}>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>{day.displayDate}</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{day.minutes.toFixed(0)}</td>
+                      <tr 
+                        key={item.key}
+                        onClick={() => {
+                          if (canDrillDown) {
+                            const nextLevel = {
+                              'date': 'businessType',
+                              'businessType': 'business',
+                              'business': 'process',
+                              'process': 'subType',
+                              'subType': 'deliverable'
+                            }[drillDownLevel]
+                            
+                            const nextFilters = { ...drillDownFilters }
+                            if (drillDownLevel === 'date') nextFilters.date = item.key
+                            else if (drillDownLevel === 'businessType') nextFilters.businessType = item.key
+                            else if (drillDownLevel === 'business') nextFilters.business = item.key
+                            else if (drillDownLevel === 'process') nextFilters.process = item.key
+                            else if (drillDownLevel === 'subType') nextFilters.subType = item.key
+                            
+                            setDrillDownFilters(nextFilters)
+                            setDrillDownLevel(nextLevel)
+                          }
+                        }}
+                        style={{ 
+                          cursor: canDrillDown ? 'pointer' : 'default',
+                          transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (canDrillDown) e.currentTarget.style.background = '#f0f9ff'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = ''
+                        }}
+                      >
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', color: canDrillDown ? '#2563eb' : 'inherit', fontWeight: canDrillDown ? '500' : 'normal' }}>
+                          {canDrillDown && '▶ '}{item.displayValue}
+                        </td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{item.minutes.toFixed(0)}</td>
                         <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{hours.toFixed(2)}</td>
                         <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{days.toFixed(2)}</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{day.count}</td>
+                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{item.count}</td>
                       </tr>
                     )
                   })}
