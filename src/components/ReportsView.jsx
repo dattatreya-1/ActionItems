@@ -59,6 +59,7 @@ export default function ReportsView() {
           const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
           const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
           const deliverableKey = cols.find(c => /deliverable/i.test(c.label || c.key))?.key
+          const deadlineKey = cols.find(c => /deadline/i.test(c.label || c.key))?.key
 
           return {
             ...row,
@@ -71,6 +72,7 @@ export default function ReportsView() {
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
             // Use Date field directly (not Create Date)
             createDate: row.Date || row.date || row.createDate || row.CreateDate || '',
+            deadline: row[deadlineKey] || row.deadline || row.Deadline || '',
             minutes: row[minutesKey] || row.Minutes || row.minutes || row.duration || row.Duration || 0
           }
         })
