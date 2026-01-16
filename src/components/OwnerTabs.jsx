@@ -63,7 +63,10 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   }
   
   const priorities = useMemo(() => {
-    return Array.from(new Set(ownerData.map(d => d[priorityKey] || '').filter(Boolean)))
+    return Array.from(new Set(ownerData.map(d => {
+      const val = d[priorityKey] || ''
+      return val ? val.toString().toUpperCase() : ''
+    }).filter(Boolean)))
   }, [ownerData, priorityKey])
   
   const businessTypes = useMemo(() => {
@@ -99,7 +102,7 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
       const toDate = new Date(deadlineTo)
       if (itemDate > toDate) return false
     }
-    if (priorityKey && priority && item[priorityKey] !== priority) return false
+    if (priorityKey && priority && (d[priorityKey] || '').toString().toUpperCase() !== priority) return false
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
     if (businessKey && business && item[businessKey] !== business) return false
     if (processKey && process && item[processKey] !== process) return false

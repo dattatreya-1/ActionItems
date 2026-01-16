@@ -75,7 +75,10 @@ export default function AdminView({ initialData = [], columns = [] }) {
   }, [initialData, subTypeKey])
 
   const priorities = useMemo(() => {
-    return Array.from(new Set(initialData.map(d => d[priorityKey] || '').filter(Boolean)))
+    return Array.from(new Set(initialData.map(d => {
+      const val = d[priorityKey] || ''
+      return val ? val.toString().toUpperCase() : ''
+    }).filter(Boolean)))
   }, [initialData, priorityKey])
 
   const statuses = useMemo(() => {
@@ -88,7 +91,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
     if (businessTypeKey && businessType && item[businessTypeKey] !== businessType) return false
     if (processKey && process && item[processKey] !== process) return false
     if (subTypeKey && subType && item[subTypeKey] !== subType) return false
-    if (priorityKey && priority && item[priorityKey] !== priority) return false
+    if (priorityKey && priority && (item[priorityKey] || '').toString().toUpperCase() !== priority) return false
     if (statusKey && status && item[statusKey] !== status) return false
     // Date filtering - convert to Date objects for proper comparison
     if (deadlineKey && from && item[deadlineKey]) {
