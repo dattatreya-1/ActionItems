@@ -54,6 +54,7 @@ export default function ReportsView() {
           const statusKey = cols.find(c => /status/i.test(c.label || c.key))?.key
           const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
           const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
+          const deliverableKey = cols.find(c => /deliverable/i.test(c.label || c.key))?.key
 
           return {
             ...row,
@@ -61,6 +62,7 @@ export default function ReportsView() {
             businessType: row[businessTypeKey] || row.businessType || row.business_type || row.BusinessType || '',
             process: row[processKey] || row.process || row.Process || '',
             subType: row[subTypeKey] || row.subType || row.sub_type || row.SubType || '',
+            deliverable: row[deliverableKey] || row.deliverable || row.Deliverable || '',
             status: row[statusKey] || row.status || row.Status || '',
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
             // Use Date field directly (not Create Date)
