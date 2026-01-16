@@ -82,7 +82,13 @@ export default function AdminView({ initialData = [], columns = [] }) {
   }, [initialData, priorityKey])
 
   const statuses = useMemo(() => {
-    return Array.from(new Set(initialData.map(d => d[statusKey] || '').filter(Boolean)))
+    return Array.from(new Set(initialData.map(d => {
+      const val = (d[statusKey] || '').toString().toLowerCase().trim()
+      if (val.includes('not') || val.includes('open')) return 'Not Started'
+      if (val.includes('progress') || val.includes('ongoing')) return 'In Progress'
+      if (val.includes('complete') || val.includes('done') || val.includes('closed')) return 'Completed'
+      return val ? d[statusKey] : ''
+    }).filter(Boolean)))
   }, [initialData, statusKey])
 
   const filtered = initialData.filter(item => {
@@ -92,7 +98,13 @@ export default function AdminView({ initialData = [], columns = [] }) {
     if (processKey && process && item[processKey] !== process) return false
     if (subTypeKey && subType && item[subTypeKey] !== subType) return false
     if (priorityKey && priority && (item[priorityKey] || '').toString().toUpperCase() !== priority) return false
-    if (statusKey && status && item[statusKey] !== status) return false
+    if (statusKey && status) {
+      const itemStatus = (item[statusKey] || '').toString().toLowerCase().trim()
+      const filterStatus = status.toLowerCase()
+      if (filterStatus.includes('not') && !itemStatus.includes('not') && !itemStatus.includes('open')) return false
+      if (filterStatus.includes('progress') && !itemStatus.includes('progress') && !itemStatus.includes('ongoing')) return false
+      if (filterStatus.includes('complete') && !itemStatus.includes('complete') && !itemStatus.includes('done') && !itemStatus.includes('closed')) return false
+    }
     // Date filtering - convert to Date objects for proper comparison
     if (deadlineKey && from && item[deadlineKey]) {
       const itemDate = new Date(item[deadlineKey])
