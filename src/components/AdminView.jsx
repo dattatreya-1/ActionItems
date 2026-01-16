@@ -11,6 +11,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
 
   // Use columns provided by parent (from API) if present, otherwise fall back to defaults
   const cols = (columns && columns.length) ? columns : getColumns()
@@ -213,14 +214,21 @@ export default function AdminView({ initialData = [], columns = [] }) {
             Reports
           </button>
         </div>
-        <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end'}}>
+        <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
           {activeTab === 'data' && (
-            <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+            <>
+              <button 
+                style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
+                onClick={() => setShowFilterModal(true)}
+              >
+                🔍 Filters
+              </button>
+              <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+            </>
           )}
         </div>
       </div>
 
-      {activeTab === 'data' && renderFilters()}
       {activeTab === 'data' && renderAdminTable()}
 
         {activeTab === 'reports' && (
@@ -248,6 +256,63 @@ export default function AdminView({ initialData = [], columns = [] }) {
             window.location.reload()
           }}
         />
+      )}
+
+      {showFilterModal && (
+        <div className="modal-backdrop" onClick={() => setShowFilterModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: '600px'}}>
+            <div className="modal-header" style={{borderBottom: '1px solid #e5e7eb', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <h3 style={{margin: 0}}>Filter Options</h3>
+              <button onClick={() => setShowFilterModal(false)} style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer'}}>&times;</button>
+            </div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Owner:
+                <select value={owner} onChange={e => setOwner(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {owners.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Business Type:
+                <select value={businessType} onChange={e => setBusinessType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {businessTypes.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Status:
+                <select value={status} onChange={e => setStatus(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px', gridColumn: '1 / -1'}}>
+                Business:
+                <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                From (deadline):
+                <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                To (deadline):
+                <input type="date" value={to} onChange={e => setTo(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+            </div>
+            <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
+              <button onClick={() => {
+                setOwner('')
+                setBusinessType('')
+                setStatus('')
+                setBusiness('')
+                setFrom('')
+                setTo('')
+              }} style={{padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Clear All</button>
+              <button onClick={() => setShowFilterModal(false)} style={{padding: '8px 16px', background: '#2b6cb0', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Apply</button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   )

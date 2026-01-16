@@ -8,6 +8,7 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
   const [sortKey, setSortKey] = useState(null)
   const [sortDir, setSortDir] = useState('asc')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showFilterModal, setShowFilterModal] = useState(false)
   
   // Filter states
   const [deadlineFrom, setDeadlineFrom] = useState('')
@@ -124,43 +125,15 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
             <>
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
                 <h2>{active}</h2>
-                <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
-              </div>
-              
-              <div className="filters">
-                <label>
-                  Deadline From:
-                  <input type="date" value={deadlineFrom} onChange={e => setDeadlineFrom(e.target.value)} />
-                </label>
-                <label>
-                  Deadline To:
-                  <input type="date" value={deadlineTo} onChange={e => setDeadlineTo(e.target.value)} />
-                </label>
-                <label>
-                  Priority:
-                  <select value={priority} onChange={e => setPriority(e.target.value)}>
-                    <option value="">(any)</option>
-                    {priorities.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Business Type:
-                  <select value={businessType} onChange={e => setBusinessType(e.target.value)}>
-                    <option value="">(any)</option>
-                    {businessTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Business:
-                  <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" />
-                </label>
-                <label>
-                  Status:
-                  <select value={status} onChange={e => setStatus(e.target.value)}>
-                    <option value="">(any)</option>
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
+                <div style={{display: 'flex', gap: '12px'}}>
+                  <button 
+                    style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
+                    onClick={() => setShowFilterModal(true)}
+                  >
+                    🔍 Filters
+                  </button>
+                  <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+                </div>
               </div>
               
               {filtered.length === 0 ? (
@@ -244,6 +217,61 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
           }}
         />
       )}
-    </section>
+      {showFilterModal && (
+        <div className="modal-backdrop" onClick={() => setShowFilterModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{maxWidth: '600px'}}>
+            <div className="modal-header" style={{borderBottom: '1px solid #e5e7eb', paddingBottom: '12px', marginBottom: '16px'}}>
+              <h3 style={{margin: 0}}>Filter Options</h3>
+              <button onClick={() => setShowFilterModal(false)} style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer'}}>&times;</button>
+            </div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Deadline From:
+                <input type="date" value={deadlineFrom} onChange={e => setDeadlineFrom(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Deadline To:
+                <input type="date" value={deadlineTo} onChange={e => setDeadlineTo(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Priority:
+                <select value={priority} onChange={e => setPriority(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {priorities.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Business Type:
+                <select value={businessType} onChange={e => setBusinessType(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {businessTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
+                </select>
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px', gridColumn: '1 / -1'}}>
+                Business:
+                <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="search business" style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}} />
+              </label>
+              <label style={{display: 'flex', flexDirection: 'column', fontSize: '13px'}}>
+                Status:
+                <select value={status} onChange={e => setStatus(e.target.value)} style={{marginTop: '4px', padding: '8px', border: '1px solid #d1d5db', borderRadius: '6px'}}>
+                  <option value="">(any)</option>
+                  {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+            </div>
+            <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
+              <button onClick={() => {
+                setDeadlineFrom('')
+                setDeadlineTo('')
+                setPriority('')
+                setBusinessType('')
+                setBusiness('')
+                setStatus('')
+              }} style={{padding: '8px 16px', background: '#f3f4f6', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Clear All</button>
+              <button onClick={() => setShowFilterModal(false)} style={{padding: '8px 16px', background: '#2b6cb0', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600'}}>Apply</button>
+            </div>
+          </div>
+        </div>
+      )}    </section>
   )
 }
