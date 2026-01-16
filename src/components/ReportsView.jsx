@@ -59,7 +59,7 @@ export default function ReportsView() {
           const userKey = cols.find(c => /user|owner|assigned/i.test(c.label || c.key))?.key
           const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
           const deliverableKey = cols.find(c => /deliverable/i.test(c.label || c.key))?.key
-          const deadlineKey = cols.find(c => /deadline/i.test(c.label || c.key))?.key
+          const dateKey = cols.find(c => c.key === 'Date' || c.label === 'Date')?.key
 
           return {
             ...row,
@@ -70,9 +70,10 @@ export default function ReportsView() {
             deliverable: row[deliverableKey] || row.deliverable || row.Deliverable || '',
             status: row[statusKey] || row.status || row.Status || '',
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
-            // Use Date field directly (not Create Date)
+            // Use Date field for createDate
             createDate: row.Date || row.date || row.createDate || row.CreateDate || '',
-            deadline: row[deadlineKey] || row.deadline || row.Deadline || '',
+            // Use Date field for deadline as well
+            deadline: row[dateKey] || row.Date || row.deadline || row.Deadline || '',
             minutes: row[minutesKey] || row.Minutes || row.minutes || row.duration || row.Duration || 0
           }
         })
