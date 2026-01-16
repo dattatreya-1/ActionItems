@@ -613,7 +613,7 @@ export default function ReportsView() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#cffafe', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>
                       {drillDownLevel === 'date' && 'Date'}
                       {drillDownLevel === 'businessType' && 'Business Type'}
                       {drillDownLevel === 'business' && 'Business'}
@@ -621,10 +621,10 @@ export default function ReportsView() {
                       {drillDownLevel === 'subType' && 'Process Sub Type'}
                       {drillDownLevel === 'deliverable' && 'Deliverable'}
                     </th>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Minutes</th>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Hours</th>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>Days</th>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2 }}>No. of Deliveries</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#cffafe', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Minutes</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#cffafe', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Hours</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#cffafe', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Days</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#cffafe', textAlign: 'right', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>No. of Deliveries</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -632,6 +632,18 @@ export default function ReportsView() {
                     const hours = item.minutes / 60
                     const days = hours / 6
                     const canDrillDown = drillDownLevel !== 'deliverable'
+                    
+                    // Define unique background colors for each hierarchy level
+                    const levelColors = {
+                      'date': '#fef3c7',           // Light yellow
+                      'businessType': '#ddd6fe',   // Light purple
+                      'business': '#fecaca',       // Light red
+                      'process': '#a7f3d0',        // Light green
+                      'subType': '#fed7aa',        // Light orange
+                      'deliverable': '#e0e7ff'     // Light indigo
+                    }
+                    
+                    const rowBgColor = levelColors[drillDownLevel] || '#fff'
                     
                     return (
                       <tr 
@@ -659,28 +671,30 @@ export default function ReportsView() {
                         }}
                         style={{ 
                           cursor: canDrillDown ? 'pointer' : 'default',
-                          transition: 'background 0.2s'
+                          transition: 'background 0.2s',
+                          background: rowBgColor
                         }}
                         onMouseEnter={(e) => {
                           if (canDrillDown) e.currentTarget.style.background = '#f0f9ff'
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = ''
+                          if (canDrillDown) e.currentTarget.style.background = rowBgColor
+                          else e.currentTarget.style.background = rowBgColor
                         }}
                       >
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', color: canDrillDown ? '#2563eb' : 'inherit', fontWeight: canDrillDown ? '500' : 'normal' }}>
+                        <td style={{ border: '2px solid #ffcccb', padding: '10px', color: canDrillDown ? '#2563eb' : 'inherit', fontWeight: canDrillDown ? '600' : 'normal' }}>
                           {canDrillDown && '▶ '}{item.displayValue}
                         </td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{item.minutes.toFixed(0)}</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{hours.toFixed(2)}</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{days.toFixed(2)}</td>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{item.count}</td>
+                        <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>{item.minutes.toFixed(0)}</td>
+                        <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>{hours.toFixed(2)}</td>
+                        <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>{days.toFixed(2)}</td>
+                        <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>{item.count}</td>
                       </tr>
                     )
                   })}
                   {dayWiseData.length === 0 && (
                     <tr>
-                      <td colSpan={5} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                      <td colSpan={5} style={{ border: '2px solid #ffcccb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
                         No data available for the selected filters.
                       </td>
                     </tr>
@@ -689,17 +703,17 @@ export default function ReportsView() {
                 {dayWiseData.length > 0 && (
                   <tfoot>
                     <tr style={{ fontWeight: 700, background: '#f3f4f6' }}>
-                      <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>Total</td>
-                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>Total</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>
                         {dayWiseData.reduce((sum, d) => sum + d.minutes, 0).toFixed(0)}
                       </td>
-                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>
                         {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60).toFixed(2)}
                       </td>
-                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>
                         {(dayWiseData.reduce((sum, d) => sum + d.minutes, 0) / 60 / 6).toFixed(2)}
                       </td>
-                      <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px', textAlign: 'right' }}>
                         {dayWiseData.reduce((sum, d) => sum + d.count, 0)}
                       </td>
                     </tr>
