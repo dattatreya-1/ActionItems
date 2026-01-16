@@ -342,15 +342,15 @@ export default function ReportsView() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2 }}>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>
                       {pivotRowDim}
                     </th>
                     {pivotData.colValues.map(cv => (
-                      <th key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f9fafb', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2 }}>
+                      <th key={cv} style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>
                         {cv || '(empty)'}
                       </th>
                     ))}
-                    <th style={{ border: '1px solid #e5e7eb', padding: '8px', background: '#f3f4f6', fontWeight: 700, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2 }}>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', fontWeight: 700, textAlign: 'center', position: 'sticky', top: 0, zIndex: 2, fontSize: '14px' }}>
                       Total
                     </th>
                   </tr>
@@ -360,33 +360,33 @@ export default function ReportsView() {
                     const rowTotal = pivotData.colValues.reduce((sum, cv) => sum + (pivotData.grid[rv][cv] || 0), 0)
                     return (
                       <tr key={rv}>
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600, background: '#fafafa' }}>
+                        <td style={{ border: '2px solid #ffcccb', padding: '8px', fontWeight: 600, background: '#fafafa' }}>
                           {rv || '(empty)'}
                         </td>
                         {pivotData.colValues.map(cv => (
-                          <td key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>
+                          <td key={cv} style={{ border: '2px solid #ffcccb', padding: '8px', textAlign: 'center' }}>
                             {pivotData.grid[rv][cv] || 0}
                           </td>
                         ))}
-                        <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f9fafb' }}>
+                        <td style={{ border: '2px solid #ffcccb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f9fafb' }}>
                           {rowTotal}
                         </td>
                       </tr>
                     )
                   })}
                   <tr>
-                    <td style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 700, background: '#f3f4f6' }}>
+                    <td style={{ border: '2px solid #ffcccb', padding: '8px', fontWeight: 700, background: '#f3f4f6' }}>
                       Total
                     </td>
                     {pivotData.colValues.map(cv => {
                       const colTotal = pivotData.rowValues.reduce((sum, rv) => sum + (pivotData.grid[rv][cv] || 0), 0)
                       return (
-                        <td key={cv} style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f3f4f6' }}>
+                        <td key={cv} style={{ border: '2px solid #ffcccb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#f3f4f6' }}>
                           {colTotal}
                         </td>
                       )
                     })}
-                    <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#e5e7eb' }}>
+                    <td style={{ border: '2px solid #ffcccb', padding: '8px', textAlign: 'center', fontWeight: 700, background: '#e5e7eb' }}>
                       {filtered.length}
                     </td>
                   </tr>
