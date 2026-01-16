@@ -10,7 +10,7 @@ header h1{ margin:0 0 12px }
 .tabs button{ padding:8px 12px; border:1px solid #ddd; background:#fff; cursor:pointer }
 .tabs button.active{ background:var(--accent); color:#fff; border-color:var(--accent)}
 table{ width:100%; border-collapse:collapse; overflow:hidden; }
-th,td{ text-align:center; padding:12px; border-bottom:1px solid #eee; }
+th,td{ text-align:center; padding:12px; border:1px solid #fed7aa; }
 tbody tr{ transition: background-color 0.2s ease; }
 tbody tr:nth-child(even){ background-color: #f9fafb; }
 tbody tr:hover{ background-color: #f0f9ff !important; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
@@ -62,8 +62,8 @@ th{
   text-transform:uppercase; 
   font-size:12px; 
   letter-spacing:0.1em; 
-  color:#6b7280; 
-  background:#fafafa; 
+  color:#065f46; 
+  background:#d1fae5; 
   position:sticky; 
   top:0; 
   z-index:2; 
@@ -307,17 +307,17 @@ th:nth-child(12), td:nth-child(12){ min-width:90px }
 .pivot-table th,
 .pivot-table td {
   padding: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #fed7aa;
   text-align: center;
 }
 
 .pivot-table thead th {
-  background: #fafafa;
+  background: #d1fae5;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.1em;
-  color: #6b7280;
+  color: #065f46;
   position: sticky;
   top: 0;
   z-index: 1;

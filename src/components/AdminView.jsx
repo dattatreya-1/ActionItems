@@ -142,7 +142,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
       <table>
         <thead>
           <tr>
-            {cols.map(c => (
+            {cols.filter(c => c.key !== 'id').map(c => (
               <th key={c.key} onClick={() => {
                 if (sortKey === c.key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
                 else { setSortKey(c.key); setSortDir('asc') }
@@ -153,7 +153,7 @@ export default function AdminView({ initialData = [], columns = [] }) {
         <tbody>
           {(sortKey ? sorted : filtered).map(r => (
             <tr key={r.id}>
-              {cols.map(c => (
+              {cols.filter(c => c.key !== 'id').map(c => (
                 <td key={c.key}>
                   {c.key === 'actions' ? (
                     <div style={{display:'flex',gap:8,justifyContent:'center'}}>
@@ -195,29 +195,29 @@ export default function AdminView({ initialData = [], columns = [] }) {
   )
   return (
     <section className="admin">
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
-        <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
-          <h2>Admin</h2>
-          <div style={{display: 'flex', gap: '0.5rem'}}>
-            <button 
-              className={activeTab === 'data' ? 'tab-active' : ''}
-              onClick={() => setActiveTab('data')}
-              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'data' ? '#2b6cb0' : 'white', color: activeTab === 'data' ? 'white' : '#333'}}
-            >
-              Data
-            </button>
-            <button 
-              className={activeTab === 'reports' ? 'tab-active' : ''}
-              onClick={() => setActiveTab('reports')}
-              style={{padding: '6px 16px', borderRadius: '6px', border: '1px solid #ddd', cursor: 'pointer', background: activeTab === 'reports' ? '#2b6cb0' : 'white', color: activeTab === 'reports' ? 'white' : '#333'}}
-            >
-              Reports
-            </button>
-          </div>
+      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
+        <div style={{flex: 1}}></div>
+        <div style={{display: 'flex', gap: '0.75rem', padding: '10px 16px', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bfdbfe', boxShadow: '0 2px 8px rgba(0,0,0,0.08)'}}>
+          <button 
+            className={activeTab === 'data' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('data')}
+            style={{padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: activeTab === 'data' ? '#2b6cb0' : '#e0f2fe', color: activeTab === 'data' ? 'white' : '#0c4a6e', fontWeight: '600', transition: 'all 0.2s ease', boxShadow: activeTab === 'data' ? '0 2px 4px rgba(43, 108, 176, 0.3)' : 'none'}}
+          >
+            Data
+          </button>
+          <button 
+            className={activeTab === 'reports' ? 'tab-active' : ''}
+            onClick={() => setActiveTab('reports')}
+            style={{padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: activeTab === 'reports' ? '#2b6cb0' : '#e0f2fe', color: activeTab === 'reports' ? 'white' : '#0c4a6e', fontWeight: '600', transition: 'all 0.2s ease', boxShadow: activeTab === 'reports' ? '0 2px 4px rgba(43, 108, 176, 0.3)' : 'none'}}
+          >
+            Reports
+          </button>
         </div>
-        {activeTab === 'data' && (
-          <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
-        )}
+        <div style={{flex: 1, display: 'flex', justifyContent: 'flex-end'}}>
+          {activeTab === 'data' && (
+            <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add Action Item</button>
+          )}
+        </div>
       </div>
 
       {activeTab === 'data' && renderFilters()}

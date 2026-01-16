@@ -230,36 +230,70 @@ export default function ReportsView() {
 
   return (
     <section style={{ padding: '1rem' }}>
-      <h2>Reports</h2>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', padding: '10px 16px', background: '#fefce8', borderRadius: '12px', border: '2px solid #ef4444', boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)' }}>
+          <button
+            onClick={() => setActiveView('pivot')}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              background: activeView === 'pivot' ? '#2b6cb0' : '#fef3c7',
+              color: activeView === 'pivot' ? 'white' : '#78350f',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              boxShadow: activeView === 'pivot' ? '0 2px 4px rgba(43, 108, 176, 0.3)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (activeView !== 'pivot') {
+                e.target.style.background = '#fde68a'
+                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeView !== 'pivot') {
+                e.target.style.background = '#fef3c7'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = 'none'
+              }
+            }}
+          >
+            Pivot Table
+          </button>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-        <button
-          onClick={() => setActiveView('pivot')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: '1px solid #ddd',
-            cursor: 'pointer',
-            background: activeView === 'pivot' ? '#2b6cb0' : 'white',
-            color: activeView === 'pivot' ? 'white' : '#333'
-          }}
-        >
-          Pivot Table
-        </button>
-
-        <button
-          onClick={() => setActiveView('daywise')}
-          style={{
-            padding: '8px 16px',
-            borderRadius: '6px',
-            border: '1px solid #ddd',
-            cursor: 'pointer',
-            background: activeView === 'daywise' ? '#2b6cb0' : 'white',
-            color: activeView === 'daywise' ? 'white' : '#333'
-          }}
-        >
-          Day-wise Workload
-        </button>
+          <button
+            onClick={() => setActiveView('daywise')}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              background: activeView === 'daywise' ? '#2b6cb0' : '#fef3c7',
+              color: activeView === 'daywise' ? 'white' : '#78350f',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              boxShadow: activeView === 'daywise' ? '0 2px 4px rgba(43, 108, 176, 0.3)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (activeView !== 'daywise') {
+                e.target.style.background = '#fde68a'
+                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeView !== 'daywise') {
+                e.target.style.background = '#fef3c7'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = 'none'
+              }
+            }}
+          >
+            Day-wise Workload
+          </button>
+        </div>
       </div>
 
       {activeView === 'pivot' && (

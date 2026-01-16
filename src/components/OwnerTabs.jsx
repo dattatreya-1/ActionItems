@@ -170,7 +170,7 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                   <table>
                     <thead>
                       <tr>
-                        {columns.map(c => (
+                        {columns.filter(c => c.key !== 'id').map(c => (
                           <th key={c.key} onClick={() => {
                             if (sortKey === c.key) setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
                             else { setSortKey(c.key); setSortDir('asc') }
@@ -183,7 +183,7 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                     <tbody>
                       {(sortKey ? sorted : filtered).map(row => (
                         <tr key={row.id}>
-                          {columns.map(col => (
+                          {columns.filter(c => c.key !== 'id').map(col => (
                             <td key={col.key}>
                               {col.key === 'actions' ? (
                                 <div style={{display:'flex',gap:8,justifyContent:'center'}}>
