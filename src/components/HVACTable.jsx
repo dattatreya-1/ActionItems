@@ -132,7 +132,7 @@ const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'ht
                   ) : '-'}
                 </td>
                 <td>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     <button className="action-btn" onClick={() => setEditingRow(row)}>
                       Edit
                     </button>

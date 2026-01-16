@@ -156,7 +156,8 @@ export default function AdminView({ initialData = [], columns = [] }) {
               {cols.map(c => (
                 <td key={c.key}>
                   {c.key === 'actions' ? (
-                    <div style={{display:'flex',gap:8}}>
+                    <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                      <button className="action-btn" title="Edit" onClick={() => setEditingRow(r)}>Edit</button>
                       <button title="Delete" className="action-btn delete" onClick={async () => {
                         const uniqueId = r.id
                         if (!confirm(`Delete item ${uniqueId}?`)) return
@@ -165,7 +166,6 @@ export default function AdminView({ initialData = [], columns = [] }) {
                           window.location.reload()
                         } catch (err) { alert('Delete failed: '+err) }
                       }}>🗑</button>
-                      <button title="Edit" className="action-btn" onClick={() => setEditingRow(r)}>Edit</button>
                     </div>
                   ) : (
                     formatCell(r[c.key])

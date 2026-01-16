@@ -186,7 +186,10 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                           {columns.map(col => (
                             <td key={col.key}>
                               {col.key === 'actions' ? (
-                                <div style={{display:'flex',gap:8}}>
+                                <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+                                  <button className="action-btn" title="Edit" onClick={() => {
+                                    window.dispatchEvent(new CustomEvent('open-edit', { detail: { row, columns } }))
+                                  }}>Edit</button>
                                   <button title="Delete" className="action-btn delete" onClick={async () => {
                                     const uniqueId = row.id
                                     if (!confirm(`Delete item ${uniqueId}?`)) return
@@ -195,9 +198,6 @@ export default function OwnerTabs({ data, owners = [], columns: columnsProp = []
                                       window.location.reload()
                                     } catch (err) { alert('Delete failed: '+err) }
                                   }}>🗑</button>
-                                  <button title="Edit" className="action-btn" onClick={() => {
-                                    window.dispatchEvent(new CustomEvent('open-edit', { detail: { row, columns } }))
-                                  }}>Edit</button>
                                 </div>
                               ) : (
                                 (function formatCell(v) {
