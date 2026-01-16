@@ -36,6 +36,10 @@ export default function ReportsView() {
   // Drill-down state for day-wise workload - Excel-like expandable hierarchy
   const [expandedRows, setExpandedRows] = useState({}) // Tracks which rows are expanded
 
+  // Pivot drill-down modal state
+  const [showPivotDetailModal, setShowPivotDetailModal] = useState(false)
+  const [pivotDetailData, setPivotDetailData] = useState([])
+
   useEffect(() => {
     let mounted = true
     setLoading(true)
@@ -160,6 +164,24 @@ export default function ReportsView() {
   }
 
   const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, filterUser, dateFrom, dateTo])
+
+  // Function to get detailed rows for a pivot cell
+  const getPivotCellDetails = (rowValue, colValue) => {
+    const normalizeValue = (val) => {
+      if (!val || !val.trim || val.trim() === '') return null
+      return val.trim()
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    }
+
+    return filtered.filter(row => {
+      const rv = normalizeValue(row[pivotRowDim])
+      const cv = normalizeValue(row[pivotColDim])
+      return rv === rowValue && cv === colValue
+    })
+  }
 
   // Build pivot table data structure
   const pivotData = useMemo(() => {
@@ -433,7 +455,33 @@ export default function ReportsView() {
                           {rv || '(empty)'}
                         </td>
                         {pivotData.colValues.map(cv => (
-                          <td key={cv} style={{ border: '2px solid #ffcccb', padding: '8px', textAlign: 'center' }}>
+                          <td 
+                            key={cv} 
+                            style={{ 
+                              border: '2px solid #ffcccb', 
+                              padding: '8px', 
+                              textAlign: 'center',
+                              cursor: pivotData.grid[rv][cv] > 0 ? 'pointer' : 'default',
+                              color: pivotData.grid[rv][cv] > 0 ? '#2563eb' : 'inherit',
+                              fontWeight: pivotData.grid[rv][cv] > 0 ? '600' : 'normal',
+                              textDecoration: pivotData.grid[rv][cv] > 0 ? 'underline' : 'none'
+                            }}
+                            onClick={() => {
+                              if (pivotData.grid[rv][cv] > 0) {
+                                const details = getPivotCellDetails(rv, cv)
+                                setPivotDetailData(details)
+                                setShowPivotDetailModal(true)
+                              }
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pivotData.grid[rv][cv] > 0) {
+                                e.currentTarget.style.background = '#dbeafe'
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = ''
+                            }}
+                          >
                             {pivotData.grid[rv][cv] || 0}
                           </td>
                         ))}
@@ -598,6 +646,52 @@ export default function ReportsView() {
                     </tr>
                   </tfoot>
                 )}
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pivot Detail Modal */}
+      {showPivotDetailModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowPivotDetailModal(false)}>
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', width: '95%', maxWidth: '1200px', maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Action Items Details ({pivotDetailData.length} items)</h2>
+              <button onClick={() => setShowPivotDetailModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#6b7280' }}>×</button>
+            </div>
+
+            <div style={{ overflow: 'auto', maxHeight: 'calc(90vh - 100px)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Business Type</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Business</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Process</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Process Sub Type</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Deliverable</th>
+                    <th style={{ border: '2px solid #ffcccb', padding: '10px', background: '#d4f4dd', textAlign: 'left', position: 'sticky', top: 0, zIndex: 2, fontWeight: 700, fontSize: '14px' }}>Deadline</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pivotDetailData.map((item, index) => (
+                    <tr key={index} style={{ background: index % 2 === 0 ? '#fff' : '#f9fafb' }}>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.businessType || '-'}</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.business || '-'}</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.process || '-'}</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.subType || '-'}</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.deliverable || '-'}</td>
+                      <td style={{ border: '2px solid #ffcccb', padding: '10px' }}>{item.deadline || item.Deadline || '-'}</td>
+                    </tr>
+                  ))}
+                  {pivotDetailData.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ border: '2px solid #ffcccb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                        No data available
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
               </table>
             </div>
           </div>
