@@ -398,7 +398,18 @@ export default function ReportsView() {
       </div>
 
       {activeView === 'dashboard' && (
-        <Dashboard rows={filtered} />
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>Dashboard</h3>
+            <button 
+              style={{background: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', fontSize: '14px'}}
+              onClick={() => setShowFilterModal(true)}
+            >
+              🔍 Filters
+            </button>
+          </div>
+          <Dashboard rows={filtered} />
+        </div>
       )}
 
       {activeView === 'pivot' && (
