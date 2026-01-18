@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { fetchActionItems, getColumns } from '../services/dataService'
+import Dashboard from './Dashboard'
 
 function ColorBox({ color, label }) {
   return (
@@ -15,7 +16,7 @@ function uniq(arr = []) {
 }
 
 export default function ReportsView() {
-  const [activeView, setActiveView] = useState('pivot')
+  const [activeView, setActiveView] = useState('dashboard')
   const [rows, setRows] = useState([])
   const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(false)
@@ -302,6 +303,37 @@ export default function ReportsView() {
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', gap: '0.75rem', padding: '10px 16px', background: '#fefce8', borderRadius: '12px', border: '2px solid #ef4444', boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15)' }}>
           <button
+            onClick={() => setActiveView('dashboard')}
+            style={{
+              padding: '10px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              background: activeView === 'dashboard' ? '#2b6cb0' : '#fef3c7',
+              color: activeView === 'dashboard' ? 'white' : '#78350f',
+              fontWeight: '600',
+              transition: 'all 0.2s ease',
+              boxShadow: activeView === 'dashboard' ? '0 2px 4px rgba(43, 108, 176, 0.3)' : 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (activeView !== 'dashboard') {
+                e.target.style.background = '#fde68a'
+                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeView !== 'dashboard') {
+                e.target.style.background = '#fef3c7'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = 'none'
+              }
+            }}
+          >
+            📊 Dashboard
+          </button>
+
+          <button
             onClick={() => setActiveView('pivot')}
             style={{
               padding: '10px 24px',
@@ -364,6 +396,10 @@ export default function ReportsView() {
           </button>
         </div>
       </div>
+
+      {activeView === 'dashboard' && (
+        <Dashboard rows={filtered} />
+      )}
 
       {activeView === 'pivot' && (
         <div>
