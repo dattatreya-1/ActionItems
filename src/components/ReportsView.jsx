@@ -28,6 +28,7 @@ export default function ReportsView() {
   const [filterSubType, setFilterSubType] = useState(null)
   const [filterStatus, setFilterStatus] = useState(null)
   const [filterUser, setFilterUser] = useState(null)
+  const [filterPriority, setFilterPriority] = useState(null)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
@@ -61,6 +62,7 @@ export default function ReportsView() {
           const minutesKey = cols.find(c => /minutes|duration|time/i.test(c.label || c.key))?.key
           const deliverableKey = cols.find(c => /deliverable/i.test(c.label || c.key))?.key
           const dateKey = cols.find(c => c.key === 'Date' || c.label === 'Date')?.key
+          const priorityKey = cols.find(c => /priority/i.test(c.label || c.key))?.key
 
           return {
             ...row,
@@ -71,6 +73,7 @@ export default function ReportsView() {
             deliverable: row[deliverableKey] || row.deliverable || row.Deliverable || '',
             status: row[statusKey] || row.status || row.Status || '',
             user: row[userKey] || row.user || row.User || row.owner || row.Owner || row.assignedTo || '',
+            priority: row[priorityKey] || row.priority || row.Priority || '',
             // Use Date field for createDate
             createDate: row.Date || row.date || row.createDate || row.CreateDate || '',
             // Use Date field for deadline as well
@@ -111,7 +114,8 @@ export default function ReportsView() {
     const st = uniq(rows.map(r => r[subTypeKey] ?? r.subType ?? r.sub_type ?? r.SubType))
     const s = uniq(rows.map(r => r[statusKey] ?? r.status ?? r.Status))
     const u = uniq(rows.map(r => r.user))
-    return { business: b, businessType: bt, process: p, subType: st, status: s, user: u }
+    const pr = uniq(rows.map(r => r.priority))
+    return { business: b, businessType: bt, process: p, subType: st, status: s, user: u, priority: pr }
   }, [rows, columns])
 
   function parseDate(v) {
@@ -146,6 +150,7 @@ export default function ReportsView() {
       if (filterSubType && r.subType !== filterSubType) return false
       if (filterStatus && r.status !== filterStatus) return false
       if (filterUser && r.user !== filterUser) return false
+      if (filterPriority && r.priority !== filterPriority) return false
 
       if (dateFrom || dateTo) {
         const d = parseDate(r.createDate || r.CreateDate || r.date || r.Date)
@@ -167,7 +172,7 @@ export default function ReportsView() {
     })
   }
 
-  const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, filterUser, dateFrom, dateTo])
+  const filtered = useMemo(() => applyFilters(rows), [rows, filterBusiness, filterBusinessType, filterProcess, filterSubType, filterStatus, filterUser, filterPriority, dateFrom, dateTo])
 
   // Function to get detailed rows for a pivot cell
   const getPivotCellDetails = (rowValue, colValue) => {
@@ -806,6 +811,14 @@ export default function ReportsView() {
                 </select>
               </div>
 
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Priority</label>
+                <select value={filterPriority || ''} onChange={e => setFilterPriority(e.target.value || null)} style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}>
+                  <option value="">(All)</option>
+                  {choices.priority.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '14px' }}>Date From</label>
@@ -827,6 +840,7 @@ export default function ReportsView() {
                   setFilterSubType(null); 
                   setFilterStatus(null); 
                   setFilterUser(null); 
+                  setFilterPriority(null);
                   setDateFrom(''); 
                   setDateTo('') 
                 }} 
