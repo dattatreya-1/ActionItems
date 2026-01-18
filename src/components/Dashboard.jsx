@@ -33,10 +33,21 @@ export default function Dashboard({ rows }) {
 
   // Tasks by Status (Pie Chart)
   const tasksByStatus = useMemo(() => {
-    const statusCounts = {}
+    const statusCounts = {
+      'Not Started': 0,
+      'In Progress': 0,
+      'Completed': 0
+    }
+    
     rows.forEach(r => {
-      const status = r.status || 'Unknown'
-      statusCounts[status] = (statusCounts[status] || 0) + 1
+      const status = (r.status || '').toLowerCase()
+      if (status.includes('not started') || status.includes('open')) {
+        statusCounts['Not Started']++
+      } else if (status.includes('in progress') || status.includes('inprogress')) {
+        statusCounts['In Progress']++
+      } else if (status.includes('completed') || status.includes('done') || status.includes('closed')) {
+        statusCounts['Completed']++
+      }
     })
 
     const labels = Object.keys(statusCounts)
@@ -48,12 +59,9 @@ export default function Dashboard({ rows }) {
       datasets: [{
         data,
         backgroundColor: [
-          '#10b981', // green - Completed
-          '#3b82f6', // blue - Not Started
+          '#ef4444', // red - Not Started
           '#f59e0b', // orange - In Progress
-          '#ef4444', // red - Stuck
-          '#8b5cf6', // purple
-          '#ec4899', // pink
+          '#10b981', // green - Completed
         ],
         borderWidth: 2,
         borderColor: '#fff'
@@ -153,37 +161,39 @@ export default function Dashboard({ rows }) {
 
   // Priority Tasks (Bar Chart)
   const priorityTasks = useMemo(() => {
-    const priorityCounts = {}
+    const priorityCounts = {
+      'V High': 0,
+      'High': 0,
+      'Medium': 0,
+      'Low': 0
+    }
+    
     rows.forEach(r => {
-      const priority = r.priority || 'Unspecified'
-      priorityCounts[priority] = (priorityCounts[priority] || 0) + 1
+      const priority = (r.priority || '').toLowerCase().trim()
+      if (priority.includes('v high') || priority === 'v high' || priority === 'vhigh') {
+        priorityCounts['V High']++
+      } else if (priority === 'high' || priority === 'high priority') {
+        priorityCounts['High']++
+      } else if (priority === 'medium' || priority === 'med') {
+        priorityCounts['Medium']++
+      } else if (priority === 'low' || priority === 'low priority') {
+        priorityCounts['Low']++
+      }
     })
 
-    const priorityOrder = ['HIGH', 'High', 'Medium', 'Low', 'LOW', 'V High', 'V HIGH', 'MEDIUM']
-    const sortedPriorities = Object.entries(priorityCounts).sort((a, b) => {
-      const aIndex = priorityOrder.indexOf(a[0])
-      const bIndex = priorityOrder.indexOf(b[0])
-      if (aIndex === -1 && bIndex === -1) return 0
-      if (aIndex === -1) return 1
-      if (bIndex === -1) return -1
-      return aIndex - bIndex
-    })
+    const labels = ['V High', 'High', 'Medium', 'Low']
+    const data = labels.map(label => priorityCounts[label])
 
     return {
-      labels: sortedPriorities.map(([priority]) => priority),
+      labels,
       datasets: [{
         label: 'Tasks by Priority',
-        data: sortedPriorities.map(([, count]) => count),
+        data,
         backgroundColor: [
-          '#3b82f6',
-          '#84cc16',
-          '#06b6d4',
-          '#f59e0b',
-          '#ef4444',
-          '#8b5cf6',
-          '#10b981',
-          '#ec4899',
-          '#14b8a6'
+          '#ef4444', // red - V High
+          '#f59e0b', // orange - High
+          '#3b82f6', // blue - Medium
+          '#10b981'  // green - Low
         ],
         borderWidth: 2,
         borderColor: '#fff'
