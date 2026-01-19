@@ -403,7 +403,7 @@ export default function ReportsView() {
       </div>
 
       {activeView === 'dashboard' && (
-        <div>
+        <div style={{ background: '#E1DFE1', padding: '16px', borderRadius: '8px', minHeight: '100vh' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '24px', fontWeight: '700' }}>Dashboard</h3>
             <button 

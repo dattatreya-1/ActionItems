@@ -295,50 +295,50 @@ export default function Dashboard({ rows }) {
             <KPICard 
               title="In Progress" 
               value={kpis.inProgress.count} 
-          color="#f59e0b" 
-          icon="⚡" 
-          onClick={() => handleCardClick('In Progress Tasks', kpis.inProgress.items)}
-          clickable={true}
-        />
-        <KPICard title="Completed" value={kpis.completed.count} color="#10b981" icon="✅" />
-      </div>
-
-      {/* Charts Grid */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', 
-        gap: '24px' 
-      }}>
-        {/* Tasks by Status Pie Chart */}
-        <ChartCard title="Tasks by status">
-          <div style={{ height: '320px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ width: '100%', maxWidth: '300px', height: '300px' }}>
-              <Pie data={tasksByStatus} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { ...chartOptions.plugins.legend, position: 'right' } } }} />
-            </div>
+              color="#f59e0b" 
+              icon="⚡" 
+              onClick={() => handleCardClick('In Progress Tasks', kpis.inProgress.items)}
+              clickable={true}
+            />
+            <KPICard title="Completed" value={kpis.completed.count} color="#10b981" icon="✅" />
           </div>
-        </ChartCard>
 
-        {/* Deliveries by User Bar Chart */}
-        <ChartCard title="Deliveries by User">
-          <div style={{ height: '320px' }}>
-            <Bar data={deliveriesByUser} options={barChartOptions} />
-          </div>
-        </ChartCard>
+          {/* Charts Grid */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', 
+            gap: '24px' 
+          }}>
+            {/* Tasks by Status Pie Chart */}
+            <ChartCard title="Tasks by status">
+              <div style={{ height: '320px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '300px', height: '300px' }}>
+                  <Pie data={tasksByStatus} options={{ ...chartOptions, plugins: { ...chartOptions.plugins, legend: { ...chartOptions.plugins.legend, position: 'right' } } }} />
+                </div>
+              </div>
+            </ChartCard>
 
-        {/* Overdue Tasks Bar Chart */}
-        <ChartCard title="Overdue tasks">
-          <div style={{ height: '320px' }}>
-            <Bar data={overdueTasks} options={barChartOptions} />
-          </div>
-        </ChartCard>
+            {/* Deliveries by User Bar Chart */}
+            <ChartCard title="Deliveries by User">
+              <div style={{ height: '320px' }}>
+                <Bar data={deliveriesByUser} options={barChartOptions} />
+              </div>
+            </ChartCard>
 
-        {/* Priority Tasks Bar Chart */}
-        <ChartCard title="Priority Tasks">
-          <div style={{ height: '320px' }}>
-            <Bar data={priorityTasks} options={barChartOptions} />
+            {/* Overdue Tasks Bar Chart */}
+            <ChartCard title="Overdue tasks">
+              <div style={{ height: '320px' }}>
+                <Bar data={overdueTasks} options={barChartOptions} />
+              </div>
+            </ChartCard>
+
+            {/* Priority Tasks Bar Chart */}
+            <ChartCard title="Priority Tasks">
+              <div style={{ height: '320px' }}>
+                <Bar data={priorityTasks} options={barChartOptions} />
+              </div>
+            </ChartCard>
           </div>
-        </ChartCard>
-      </div>
         </>
       )}
 
@@ -423,30 +423,36 @@ function DeliverableDetailsModal({ deliverables, status, onClose }) {
   }
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.6)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      backdropFilter: 'blur(4px)'
-    }}>
-      <div style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        padding: '32px',
-        maxWidth: '1000px',
-        width: '90%',
-        maxHeight: '85vh',
-        overflow: 'auto',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-        border: `3px solid ${getStatusColor(status)}`
-      }}>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)'
+      }}
+      onClick={onClose}
+    >
+      <div 
+        style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '32px',
+          maxWidth: '1000px',
+          width: '90%',
+          maxHeight: '85vh',
+          overflow: 'auto',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          border: `3px solid ${getStatusColor(status)}`
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '2px solid #e5e7eb', paddingBottom: '16px' }}>
           <div>
             <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '800', color: '#1e293b' }}>Deliverable Details</h2>
@@ -598,7 +604,9 @@ function CalendarView({ rows }) {
   }
 
   const handleStatusClick = (tasks, status) => {
+    console.log('Status clicked:', status, 'Tasks:', tasks)
     const filteredTasks = tasks.filter(task => task.status === status)
+    console.log('Filtered tasks:', filteredTasks)
     setSelectedDeliverables(filteredTasks)
     setSelectedStatus(status)
     setShowDetailsModal(true)

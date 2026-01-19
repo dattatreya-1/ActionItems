@@ -3,8 +3,8 @@
   --muted:#666;
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 }
-body{ margin:0; background:#f7fafc; color:#111 }
-.app{ max-width:100%; margin:0; padding:16px; background:white; min-height:100vh }
+body{ margin:0; background:#E1DFE1; color:#111 }
+.app{ max-width:100%; margin:0; padding:16px; background:#E1DFE1; min-height:100vh }
 header h1{ margin:0 0 12px }
 .tabs{ display:flex; gap:8px; margin-bottom:12px }
 .tabs button{ padding:8px 12px; border:1px solid #ddd; background:#fff; cursor:pointer }
