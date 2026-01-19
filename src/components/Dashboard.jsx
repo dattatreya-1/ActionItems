@@ -233,8 +233,8 @@ export default function Dashboard({ rows }) {
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      {/* Tab Navigation */}
+    <div style={{ padding: '20px', background: '#E1DFE1', minHeight: '100vh' }}>
+      {/* Tab Navigation */
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '2px solid #e5e7eb', paddingBottom: '12px' }}>
         <button
           onClick={() => setActiveTab('dashboard')}
@@ -413,9 +413,148 @@ export default function Dashboard({ rows }) {
   )
 }
 
+function DeliverableDetailsModal({ deliverables, status, onClose }) {
+  const getStatusColor = (status) => {
+    const s = (status || '').toLowerCase()
+    if (s.includes('completed') || s.includes('done') || s.includes('closed')) return '#10b981'
+    if (s.includes('in progress') || s.includes('inprogress')) return '#f59e0b'
+    if (s.includes('not started') || s.includes('open')) return '#ef4444'
+    return '#6b7280'
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      backdropFilter: 'blur(4px)'
+    }}>
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '16px',
+        padding: '32px',
+        maxWidth: '1000px',
+        width: '90%',
+        maxHeight: '85vh',
+        overflow: 'auto',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+        border: `3px solid ${getStatusColor(status)}`
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '2px solid #e5e7eb', paddingBottom: '16px' }}>
+          <div>
+            <h2 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: '800', color: '#1e293b' }}>Deliverable Details</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', background: `${getStatusColor(status)}20`, border: `2px solid ${getStatusColor(status)}` }}>
+                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: getStatusColor(status) }}></div>
+                <span style={{ fontWeight: '700', fontSize: '16px', color: '#1e293b' }}>{status}</span>
+              </div>
+              <span style={{ fontSize: '16px', fontWeight: '600', color: '#64748b' }}>{deliverables.length} deliverable{deliverables.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+          <button 
+            onClick={onClose}
+            style={{
+              background: '#ef4444',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 20px',
+              fontSize: '16px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(239, 68, 68, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#dc2626'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#ef4444'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+          >
+            ✕ Close
+          </button>
+        </div>
+        
+        <div style={{ display: 'grid', gap: '16px' }}>
+          {deliverables.map((item, index) => (
+            <div key={index} style={{
+              background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+              borderRadius: '12px',
+              padding: '20px',
+              border: '2px solid #e5e7eb',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
+              e.currentTarget.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.05)'
+              e.currentTarget.style.transform = 'translateY(0)'
+            }}
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Business</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.business || item.Business || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Business Type</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.businessType || item['Business Type'] || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Process</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.process || item.Process || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Process Sub Type</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.processSubType || item['Process Sub Type'] || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Estimated Time</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.estimatedTime || item['Estimated Time'] || 'N/A'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Priority</div>
+                  <div style={{ 
+                    fontSize: '16px', 
+                    fontWeight: '700', 
+                    color: (item.priority || item.Priority || '').toLowerCase() === 'high' ? '#ef4444' : 
+                           (item.priority || item.Priority || '').toLowerCase() === 'medium' ? '#f59e0b' : '#10b981'
+                  }}>
+                    {item.priority || item.Priority || 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date</div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b' }}>{item.deadline || item.Deadline || item.date || item.Date || 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CalendarView({ rows }) {
   const [viewMode, setViewMode] = useState('monthly')
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [selectedDeliverables, setSelectedDeliverables] = useState([])
+  const [selectedStatus, setSelectedStatus] = useState('')
 
   const parseDate = (v) => {
     if (!v) return null
@@ -458,6 +597,13 @@ function CalendarView({ rows }) {
     return counts
   }
 
+  const handleStatusClick = (tasks, status) => {
+    const filteredTasks = tasks.filter(task => task.status === status)
+    setSelectedDeliverables(filteredTasks)
+    setSelectedStatus(status)
+    setShowDetailsModal(true)
+  }
+
   const renderMonthlyView = () => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -491,7 +637,24 @@ function CalendarView({ rows }) {
           {tasks.length > 0 && <div style={{ fontSize: '11px', fontWeight: '600', marginBottom: '4px', color: '#64748b' }}>{tasks.length} task{tasks.length > 1 ? 's' : ''}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {Object.entries(statusCounts).slice(0, 3).map(([status, count]) => (
-              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '3px 6px', borderRadius: '4px', background: `${getStatusColor(status)}20`, border: `1px solid ${getStatusColor(status)}` }}>
+              <div 
+                key={status} 
+                onClick={() => handleStatusClick(tasks, status)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '4px', 
+                  fontSize: '11px', 
+                  padding: '3px 6px', 
+                  borderRadius: '4px', 
+                  background: `${getStatusColor(status)}20`, 
+                  border: `1px solid ${getStatusColor(status)}`,
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
                 <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: getStatusColor(status) }}></div>
                 <span style={{ fontWeight: '600', color: '#1e293b' }}>{count}</span>
               </div>
@@ -521,7 +684,24 @@ function CalendarView({ rows }) {
           {tasks.length > 0 && <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#64748b' }}>{tasks.length} deliverable{tasks.length > 1 ? 's' : ''}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {Object.entries(statusCounts).map(([status, count]) => (
-              <div key={status} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', padding: '6px 10px', borderRadius: '6px', background: `${getStatusColor(status)}20`, border: `2px solid ${getStatusColor(status)}` }}>
+              <div 
+                key={status} 
+                onClick={() => handleStatusClick(tasks, status)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  fontSize: '13px', 
+                  padding: '6px 10px', 
+                  borderRadius: '6px', 
+                  background: `${getStatusColor(status)}20`, 
+                  border: `2px solid ${getStatusColor(status)}`,
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              >
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: getStatusColor(status) }}></div>
                 <span style={{ fontWeight: '700', color: '#1e293b' }}>{status}: {count}</span>
               </div>
@@ -551,6 +731,13 @@ function CalendarView({ rows }) {
 
   return (
     <div>
+      {showDetailsModal && (
+        <DeliverableDetailsModal 
+          deliverables={selectedDeliverables}
+          status={selectedStatus}
+          onClose={() => setShowDetailsModal(false)}
+        />
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '16px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button onClick={goToPrevious} style={{ padding: '10px 16px', borderRadius: '8px', border: 'none', background: '#fff', cursor: 'pointer', fontWeight: '700', fontSize: '18px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>←</button>

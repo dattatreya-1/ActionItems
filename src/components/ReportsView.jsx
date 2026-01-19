@@ -483,7 +483,7 @@ export default function ReportsView() {
             </div>
           </div>
           
-          <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto' }}>
+          <div style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: 12, overflow: 'auto', background: '#EDDDD4' }}>
             <div style={{ overflow: 'auto', maxHeight: '600px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
